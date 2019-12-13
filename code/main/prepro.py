@@ -1,6 +1,6 @@
 import configuration as config
 import jieba
-import new_utilities
+import dao
 from keras.preprocessing.sequence import pad_sequences
 import pickle
 import os
@@ -61,13 +61,14 @@ class PreProcessing:
                 Tokenization with Jieba + Customized Dictionary
         '''
         tok_file = os.path.join(config.data_dir, filename + ".tok." + dict_txt)
-        if not os.path.exists(tok_file):
-            new_utilities.save_sen2tok(filename, dict_txt)
+        #if not os.path.exists(tok_file):
+        dao.save_sen2tok(filename, dict_txt)
 
         with open(tok_file, "r") as f:
             sen_list = f.readlines()
-        num = int(sen_list[0])
-        return [sen[:-1].split("/") for sen in sen_list[1:]]  # avoid "\n" at the end
+        # num = int(sen_list[0])
+        # sen_list = sen_list[1:]
+        return [sen[:-1].split(" ") for sen in sen_list]  # avoid "\n" at the end
 
     def loadVocab(self, split):
         print("="*5, " loadData: split = ", split)

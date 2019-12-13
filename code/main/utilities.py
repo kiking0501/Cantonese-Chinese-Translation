@@ -7,6 +7,7 @@ import re
 import numpy as np
 import scipy.stats
 import os
+import dao
 
 
 ################################################################ Beam search data structures
@@ -114,6 +115,7 @@ def getBlue(validOutFile_name, original_data_path, BLEUOutputFile_path, decoder_
         outputLine = preprocessing_obj.fromIdxSeqToVocabSeq(outputLine)
         if "sentend" in outputLine:
             outputLine = outputLine[:outputLine.index("sentend")]
+        outputLine = dao.char_cut(outputLine)
         if verbose:
             print (outputLine)
             print (preprocessing_obj.fromIdxSeqToVocabSeq(groundLine))
@@ -121,8 +123,9 @@ def getBlue(validOutFile_name, original_data_path, BLEUOutputFile_path, decoder_
         validOutFile.write(outputLine)
     validOutFile.close()
 
+    print("perl multi-bleu.perl -lc " + original_data_path + " < " + validOutFile_name)
     BLEUOutput = os.popen("perl multi-bleu.perl -lc " + original_data_path + " < " + validOutFile_name).read()
-    BLEUOutputFile = open(BLEUOutputFile_path,"w")
+    BLEUOutputFile = open(BLEUOutputFile_path, "w")
     BLEUOutputFile.write(BLEUOutput)
     BLEUOutputFile.close()
 

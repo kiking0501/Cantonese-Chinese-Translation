@@ -11,14 +11,6 @@ from configuration import data_dir
 import requests
 import shutil
 
-def download_file(url):
-    local_filename = url.split('/')[-1]
-    with requests.get(url, stream=True) as r:
-        with open(local_filename, 'wb') as f:
-            shutil.copyfileobj(r.raw, f)
-
-    return local_filename
-
 
 s2t = OpenCC('s2t')
 t2c = OpenCC('t2s')
@@ -103,8 +95,8 @@ def save_train_valid(train_data, valid_data):
     for split, data in [("train", train_data), ("valid", valid_data)]:
         input_f = open(os.path.join(data_dir, "%s.stdch.sent" % split), "w")
         output_f = open(os.path.join(data_dir, "%s.canto.sent" % split), "w")
-        input_f.write("%s\n" % len(data))
-        output_f.write("%s\n" % len(data))
+        # input_f.write("%s\n" % len(data))
+        # output_f.write("%s\n" % len(data))
         for li in data:
             input_f.write("%s\n" % li[0])
             output_f.write("%s\n" % li[1])
@@ -112,6 +104,8 @@ def save_train_valid(train_data, valid_data):
         output_f.close()
         print("%s saved." % input_f.name)
         print("%s saved." % output_f.name)
+        save_sen2tok("%s.stdch.sent" % split, 'char')
+        save_sen2tok("%s.canto.sent" % split, 'char')
 
 
 def load_jieba(dict_txt=None):
@@ -122,9 +116,23 @@ def load_jieba(dict_txt=None):
     print("Successfully set Jieba-dict to '%s'. " % dict_txt)
 
 
+def char_cut(ori_sentok):
+    ''' cut all chinese tokens into single characters '''
+    sentok = []
+    for ori_st in ori_sentok:
+        if DL.lang(ori_st) == "CHINESE":
+            sentok += list(ori_st)
+        else:
+            sentok.append(ori_st)
+    return sentok
+
+
 def save_sen2tok(file_name, dict_txt):
 
     def replace_space(ori_sentok):
+        ''' space is reserved for tokenization
+            so replace original space by comma
+        '''
         new_sentok = []
         for ind, st in enumerate(ori_sentok[1:-1]):
             if not st.strip():
@@ -136,22 +144,29 @@ def save_sen2tok(file_name, dict_txt):
             new_sentok.append(st)
         return [ori_sentok[0]] + new_sentok + [ori_sentok[-1]]
 
-    print("Tokenizing %s..." % file_name)
+    print("Tokenizing %s with %s ..." % (file_name, dict_txt))
     with open(os.path.join(data_dir, file_name), "r") as f:
         sen_list = f.readlines()
-    num = int(sen_list[0])
-    sen_list = sen_list[1:]
+    # num = int(sen_list[0])
+    # sen_list = sen_list[1:]
 
-    load_jieba(dict_txt)
-    sentok_list = [list(jieba.cut(sen[:-1], cut_all=False)) for sen in sen_list]  # avoid "\n"
-    sentok_list = [replace_space(sentok) for sentok in sentok_list]
-    sentok_list = ["/".join(sentok) for sentok in sentok_list]
+    if dict_txt == 'char':
+        load_jieba()
+        sentok_list = [list(jieba.cut(sen[:-1], cut_all=False)) for sen in sen_list]  # avoid "\n"
+        sentok_list = [replace_space(sentok) for sentok in sentok_list]
+        sentok_list = [char_cut(sentok) for sentok in sentok_list]
+        sentok_list = [" ".join(sentok) for sentok in sentok_list]
+    else:
+        load_jieba(dict_txt)
+        sentok_list = [list(jieba.cut(sen[:-1], cut_all=False)) for sen in sen_list]  # avoid "\n"
+        sentok_list = [replace_space(sentok) for sentok in sentok_list]
+        sentok_list = [" ".join(sentok) for sentok in sentok_list]
 
     with open(os.path.join(data_dir, file_name + ".tok." + dict_txt), "w") as f:
-        f.write("%s\n" % num)
+        # f.write("%s\n" % num)
         for sentok in sentok_list:
             f.write(sentok + "\n")
-            print(sentok)
+            #print(sentok)
 
         print("Total: %d" % (len(sentok_list)))
         print("%s saved." % f.name)

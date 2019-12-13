@@ -1,5 +1,8 @@
 data_dir = "../../data/"
 
+# GPU
+use_gpu = False
+
 # preprocessing params
 max_input_seq_length = 25
 max_output_seq_length = 25
@@ -14,8 +17,8 @@ use_pointer = True
 lstm_cell_size = 300
 embeddings_dim = 300
 
-use_reverse_encoder=True
-share_encoder_decoder_embeddings=True
+use_reverse_encoder = True
+share_encoder_decoder_embeddings = True
 use_pretrained_embeddings = True
 pretrained_embeddings_are_trainable = False
 canto_embedding_path = data_dir + "embedding/canto.pkl"

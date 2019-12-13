@@ -192,7 +192,7 @@ class Solver:
                         config, encoder_inputs[:batch_size], decoder_outputs[:batch_size],
                         reverse_vocab, sess)
                 if step % save_step == 0:
-                    save_path = saver.save(sess, "./tmp/" + model_name + str(step) + ".ckpt")
+                    save_path = saver.save(sess, os.path.join(data_dir, "tmp", model_name + str(step) + ".ckpt"))
                     # save_path = saver.save(sess, "./tmp/" + model_name + ".ckpt") # SAVE LATEST
                     print ("Model saved in file: ", save_path)
                 step += 1
@@ -223,15 +223,18 @@ class Solver:
                         if val == 2: break  # sentend. TO DO: load this value from config
                         ret += (" " + reverse_vocab[val])
                     #print "decoder_ground_truth_outputs[i] = ",decoder_ground_truth_outputs[i]
-                        if i < len(decoder_ground_truth_outputs):
-                            if print_gt:
-                                gt = [reverse_vocab[j] for j in decoder_ground_truth_outputs[i]
-                                      if reverse_vocab[j] != "padword"]
-                                print ("GT: ", gt)
-                            print ("prediction: ", ret)
-                            print ("")
-                            if i > 20:
-                                break
+                    if i < len(decoder_ground_truth_outputs):
+                        if print_gt:
+                            gt = [reverse_vocab[j] for j in decoder_ground_truth_outputs[i]
+                                  if reverse_vocab[j] != "padword"]
+                            inpt = [reverse_vocab[j] for j in encoder_inputs[i]
+                                    if reverse_vocab[j] != "padword"]
+                            print("INPUT: ", inpt)
+                            print ("GT: ", gt)
+                        print ("prediction: ", ret)
+                        print ("")
+                        if i > 20:
+                            break
             return decoder_outputs_inference, alpha_inference
         elif typ == "beam":
             pass
@@ -339,9 +342,9 @@ class Solver:
         decoder_outputs_inference, decoder_ground_truth_outputs = self.solveAll(
             params, val_encoder_inputs, val_decoder_outputs, reverse_vocab,
             sess=sess, print_progress=False)
-        validOutFile_name = "./tmp/tmp_" + model_name + ".valid.output"
-        original_data_path = data_dir + "valid.original.nltktok"
-        BLEUOutputFile_path = "./tmp/tmp_" + model_name + ".valid.BLEU"
+        validOutFile_name = os.path.join(data_dir, "tmp", "tmp_" + model_name + ".valid.output")
+        original_data_path = data_dir + params['preprocessing'].OUT_SRC['valid'] + '.tok.char'
+        BLEUOutputFile_path = os.path.join(data_dir, "tmp", "tmp_" + model_name + ".valid.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
             decoder_outputs_inference, decoder_ground_truth_outputs,

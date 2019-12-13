@@ -1,0 +1,5 @@
+srt==3.0.0
+opencc-python-reimplemented==0.1.5 #opencc==0.2
+jieba==0.39
+pycantonese==2.2.0
+

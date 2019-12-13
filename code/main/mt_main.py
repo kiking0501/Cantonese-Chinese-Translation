@@ -1,23 +1,29 @@
+import configuration as config
+import os
+
 import tensorflow as tf
 import numpy as np
 # Set seed for reproducability
 tf.set_random_seed(1)
 np.random.seed(1)
-# limit GPU usage
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
+
+if config.use_gpu:
+    # limit GPU usage
+    tf_config = tf.ConfigProto()
+    tf_config.gpu_options.allow_growth = True
+else:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 from keras.preprocessing.sequence import pad_sequences
-import configuration as config
+
 import pickle
 import sys
 #import mt_model as models
 import utilities as datasets
 import utilities
-import new_utilities as nu
+import dao
 import mt_solver as solver
 from prepro import PreProcessing
-import os
 
 ########################
 usage = '''
@@ -74,18 +80,21 @@ def main():
 
     ########### INIT
     if mode == "init":
-        #nu.translate_jieba_dict()
-        #nu.create_jieba_dict_pycanto()
-
-        #nu.save_train_valid(*nu.train_valid_split(nu.read_transcript("01.srt")))
-        nu.download_embedding()
-        nu.save_embedding("cantonese/wiki.zh_yue.vec", "canto.pkl")
-        nu.save_embedding("standard_chinese/wiki.zh.vec", "stdch.pkl")
+        dao.translate_jieba_dict()
+        dao.create_jieba_dict_pycanto()
+        if not (os.path.exists(params['canto_embedding_path']) or
+                os.path.exists(params['stdch_embedding_path'])):
+            dao.download_embedding()
+            dao.save_embedding("cantonese/wiki.zh_yue.vec", "canto.pkl")
+            dao.save_embedding("standard_chinese/wiki.zh.vec", "stdch.pkl")
         return
 
     ########### PREPROCESSING
 
     if mode == "preprocessing":
+
+        dao.save_train_valid(*dao.train_valid_split(dao.read_transcript("01.srt")))
+
         # preprocesing
         print("=" * 5)
         preprocessing = PreProcessing()
