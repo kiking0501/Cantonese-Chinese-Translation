@@ -185,12 +185,13 @@ class Solver:
                         token_output_sequences_decoder_inpmatch_placeholder,
                         decoder_outputs_matching_inputs, cost, sentinel_cost, sess)
                     print ("step ", step, " : loss = ", loss)
-                    bleu = self.getBleuOnVal(config, reverse_vocab, val_feed_dct, sess, model_name)
+                    bleu = self.getBleuOnVal(config, reverse_vocab, val_feed_dct, sess, "%s%s" % (model_name, step))
                     print ("step ", step, " : bleu = ", bleu)
                 if step % sample_step == 0:
                     self.runInference(
                         config, encoder_inputs[:batch_size], decoder_outputs[:batch_size],
-                        reverse_vocab, sess)
+                        reverse_vocab, sess,
+                        show_num=5)
                 if step % save_step == 0:
                     save_path = saver.save(sess, os.path.join(data_dir, "tmp", model_name + str(step) + ".ckpt"))
                     # save_path = saver.save(sess, "./tmp/" + model_name + ".ckpt") # SAVE LATEST
@@ -202,7 +203,7 @@ class Solver:
     ###################################################################################
 
     def runInference(self, config, encoder_inputs, decoder_ground_truth_outputs,
-                     reverse_vocab, sess, print_all=True, print_gt=True):  # sampling
+                     reverse_vocab, sess, print_all=True, print_gt=True, show_num=20):  # sampling
         typ = "greedy"  # config['inference_type']
         model_obj = self.model_obj
         feed_dct = {model_obj.token_lookup_sequences_placeholder_inference: encoder_inputs}
@@ -233,7 +234,7 @@ class Solver:
                             print ("GT: ", gt)
                         print ("prediction: ", ret)
                         print ("")
-                        if i > 20:
+                        if i > show_num:
                             break
             return decoder_outputs_inference, alpha_inference
         elif typ == "beam":
@@ -243,7 +244,7 @@ class Solver:
     ###################################################################################
 
     def solveAll(self, config, encoder_inputs, decoder_ground_truth_outputs, reverse_vocab,
-                 sess=None, print_progress=True, inference_type="greedy"):  # sampling
+                 sess=None, print_progress=True, inference_type="greedy", show_num=5):  # sampling
 
         if print_progress:
             print (" SolveAll ...... ", "="*5)
@@ -266,7 +267,7 @@ class Solver:
         alpha = []
         for i in range(num_batches):
             if print_progress:
-                print ("i= ", i)
+                print ("Batch(i) = ", i)
             encoder_inputs_cur = encoder_inputs[i*batch_size:(i+1)*batch_size]
             decoder_ground_truth_cur = decoder_ground_truth_outputs[i*batch_size:(i+1)*batch_size]
             lim = len(encoder_inputs_cur)
@@ -278,7 +279,8 @@ class Solver:
                 decoder_outputs_inference_cur, alpha_cur = self.runInference(
                     config,
                     encoder_inputs_cur, decoder_ground_truth_cur, reverse_vocab,
-                    sess=sess, print_all=print_progress, print_gt=print_progress)
+                    sess=sess, print_all=print_progress, print_gt=print_progress,
+                    show_num=show_num)
                 decoder_outputs_inference.extend(decoder_outputs_inference_cur[:lim])
                 alpha.extend(alpha_cur[:lim])
             else:
@@ -341,10 +343,10 @@ class Solver:
         val_encoder_inputs, val_decoder_inputs, val_decoder_outputs, val_decoder_outputs_matching_inputs = val_feed
         decoder_outputs_inference, decoder_ground_truth_outputs = self.solveAll(
             params, val_encoder_inputs, val_decoder_outputs, reverse_vocab,
-            sess=sess, print_progress=False)
-        validOutFile_name = os.path.join(data_dir, "tmp", "tmp_" + model_name + ".valid.output")
+            sess=sess, print_progress=True, show_num=5)
+        validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".valid.output")
         original_data_path = data_dir + params['preprocessing'].OUT_SRC['valid'] + '.tok.char'
-        BLEUOutputFile_path = os.path.join(data_dir, "tmp", "tmp_" + model_name + ".valid.BLEU")
+        BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".valid.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
             decoder_outputs_inference, decoder_ground_truth_outputs,

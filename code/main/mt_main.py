@@ -18,7 +18,6 @@ from keras.preprocessing.sequence import pad_sequences
 
 import pickle
 import sys
-#import mt_model as models
 import utilities as datasets
 import utilities
 import dao

@@ -7,7 +7,7 @@ Link to the original code: https://github.com/harsh19/Shakespearizing-Modern-Eng
 
 # Requirements
 - Python 3.5
-- Tensorflow 1.13.1
+- Tensorflow 1.1.0 (framework)
 
 # Instructions to run:
 
@@ -39,6 +39,12 @@ Link to the original code: https://github.com/harsh19/Shakespearizing-Modern-Eng
 
 ### Model
 - Link to the original paper: https://arxiv.org/abs/1707.01161
+
+# Troubleshoot
+
+### BLEU evaluation
+- *OSError: [Errno 12] Cannot allocate memory*: Might not have enough RAM to run the .perl file. Try [adding a new swapfile](https://askubuntu.com/questions/927854/how-do-i-increase-the-size-of-swapfile-without-removing-it-in-the-terminal) (e.g. make to 4G total).
+
 
 # Reference
 ```
