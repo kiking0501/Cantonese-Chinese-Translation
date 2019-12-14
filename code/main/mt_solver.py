@@ -188,10 +188,12 @@ class Solver:
                     bleu = self.getBleuOnVal(config, reverse_vocab, val_feed_dct, sess, "%s%s" % (model_name, step))
                     print ("step ", step, " : bleu = ", bleu)
                 if step % sample_step == 0:
+                    print("Begin Training Samples...(%d)" % show_num)
                     self.runInference(
                         config, encoder_inputs[:batch_size], decoder_outputs[:batch_size],
                         reverse_vocab, sess,
                         show_num=5)
+                    print("End Training Samples.")
                 if step % save_step == 0:
                     save_path = saver.save(sess, os.path.join(data_dir, "tmp", model_name + str(step) + ".ckpt"))
                     # save_path = saver.save(sess, "./tmp/" + model_name + ".ckpt") # SAVE LATEST

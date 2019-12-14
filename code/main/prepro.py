@@ -60,7 +60,7 @@ class PreProcessing:
         ''' Modification:
                 Tokenization with Jieba + Customized Dictionary
         '''
-        tok_file = os.path.join(config.data_dir, filename + ".tok." + dict_txt)
+        #tok_file = os.path.join(config.data_dir, filename + ".tok." + dict_txt)
         #if not os.path.exists(tok_file):
         dao.save_sen2tok(filename, dict_txt)
 
