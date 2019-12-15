@@ -9,16 +9,17 @@ import numpy as np
 
 class PreProcessing:
 
-    INP_SRC = {
-        "train": "train.stdch.sent",
-        "valid": "valid.stdch.sent",
-    }
     OUT_SRC = {
         "train": "train.canto.sent",
         "valid": "valid.canto.sent",
     }
+
+    INP_SRC = {
+        "train": "train.stdch.sent",
+        "valid": "valid.stdch.sent",
+    }
+    OUT_TOK = "dict.txt.pycanto-canto_wiki"
     INP_TOK = "dict.txt.big_trad"
-    OUT_TOK = "dict.txt.pycanto"
 
     def __init__(self):
         self.unknown_word = "UNK".lower()
@@ -60,7 +61,7 @@ class PreProcessing:
         ''' Modification:
                 Tokenization with Jieba + Customized Dictionary
         '''
-        #tok_file = os.path.join(config.data_dir, filename + ".tok." + dict_txt)
+        tok_file = os.path.join(config.data_dir, filename + ".tok." + dict_txt)
         #if not os.path.exists(tok_file):
         dao.save_sen2tok(filename, dict_txt)
 

@@ -93,17 +93,15 @@ def save_train_valid(train_data, valid_data):
     ''' train_data / valid_data should be a list of tuples of sentences (std-chinese, cantonese) '''
 
     for split, data in [("train", train_data), ("valid", valid_data)]:
-        input_f = open(os.path.join(data_dir, "%s.stdch.sent" % split), "w")
-        output_f = open(os.path.join(data_dir, "%s.canto.sent" % split), "w")
-        # input_f.write("%s\n" % len(data))
-        # output_f.write("%s\n" % len(data))
+        stdch_f = open(os.path.join(data_dir, "%s.stdch.sent" % split), "w")
+        canto_f = open(os.path.join(data_dir, "%s.canto.sent" % split), "w")
         for li in data:
-            input_f.write("%s\n" % li[0])
-            output_f.write("%s\n" % li[1])
-        input_f.close()
-        output_f.close()
-        print("%s saved." % input_f.name)
-        print("%s saved." % output_f.name)
+            stdch_f.write("%s\n" % li[0])
+            canto_f.write("%s\n" % li[1])
+        stdch_f.close()
+        canto_f.close()
+        print("%s saved." % stdch_f.name)
+        print("%s saved." % canto_f.name)
         save_sen2tok("%s.stdch.sent" % split, 'char')
         save_sen2tok("%s.canto.sent" % split, 'char')
 
@@ -127,22 +125,23 @@ def char_cut(ori_sentok):
     return sentok
 
 
-def save_sen2tok(file_name, dict_txt):
+def _replace_space(ori_sentok):
+    ''' space is reserved for tokenization
+        so replace original space by comma
+    '''
+    new_sentok = []
+    for ind, st in enumerate(ori_sentok[1:-1]):
+        if not st.strip():
+            left = bool(DL.lang(ori_sentok[ind]) == "ENGLISH")
+            right = bool(DL.lang(ori_sentok[ind+2]) == "ENGLISH")
+            if not (left and right):
+                new_sentok.append(",")
+                continue
+        new_sentok.append(st)
+    return [ori_sentok[0]] + new_sentok + [ori_sentok[-1]]
 
-    def replace_space(ori_sentok):
-        ''' space is reserved for tokenization
-            so replace original space by comma
-        '''
-        new_sentok = []
-        for ind, st in enumerate(ori_sentok[1:-1]):
-            if not st.strip():
-                left = bool(DL.lang(ori_sentok[ind]) == "ENGLISH")
-                right = bool(DL.lang(ori_sentok[ind+2]) == "ENGLISH")
-                if not (left and right):
-                    new_sentok.append(",")
-                    continue
-            new_sentok.append(st)
-        return [ori_sentok[0]] + new_sentok + [ori_sentok[-1]]
+
+def save_sen2tok(file_name, dict_txt):
 
     print("Tokenizing %s with %s ..." % (file_name, dict_txt))
     with open(os.path.join(data_dir, file_name), "r") as f:
@@ -153,13 +152,13 @@ def save_sen2tok(file_name, dict_txt):
     if dict_txt == 'char':
         load_jieba()
         sentok_list = [list(jieba.cut(sen[:-1], cut_all=False)) for sen in sen_list]  # avoid "\n"
-        sentok_list = [replace_space(sentok) for sentok in sentok_list]
+        sentok_list = [_replace_space(sentok) for sentok in sentok_list]
         sentok_list = [char_cut(sentok) for sentok in sentok_list]
         sentok_list = [" ".join(sentok) for sentok in sentok_list]
     else:
         load_jieba(dict_txt)
         sentok_list = [list(jieba.cut(sen[:-1], cut_all=False)) for sen in sen_list]  # avoid "\n"
-        sentok_list = [replace_space(sentok) for sentok in sentok_list]
+        sentok_list = [_replace_space(sentok) for sentok in sentok_list]
         sentok_list = [" ".join(sentok) for sentok in sentok_list]
 
     with open(os.path.join(data_dir, file_name + ".tok." + dict_txt), "w") as f:
@@ -215,6 +214,39 @@ def save_embedding(file_name, output_name, ensure_trad=True):
     print("%s saved." % output_path)
 
 
+def merge_dict_txt_with_embedding_tokens(dict_txt, emb_file):
+    print("Merging %s with %s..." % (dict_txt, emb_file))
+    with open(os.path.join(config.data_dir, "jieba_dict", dict_txt)) as f:
+        dt_toks = [l[:-1] for l in f.readlines()]
+        tok_set = set([dt.split(' ')[0] for dt in dt_toks])
+    emb_toks = pickle.load(
+        open(os.path.join(config.data_dir, 'embedding', emb_file), "rb")).keys()
+    dt_toks += [et for et in emb_toks if et not in tok_set and dao.DL.lang(et) == 'CHINESE']
+    with open(os.path.join(config.data_dir, "jieba_dict", dict_txt + '-' + emb_file.partition('.')[0]), "w") as f:
+        for dt in dt_toks:
+            f.write("%s 1\n" % dt)
+        print("%s saved." % f.name)
+
+
+def merge_dict_txt_list(dict_txt_list):
+    print("Merging %s ..." % (dict_txt_list))
+    total_dt_toks = []
+    total_tok_set = set()
+    for dict_txt in dict_txt_list:
+        with open(os.path.join(config.data_dir, "jieba_dict", dict_txt)) as f:
+            dt_toks = [l[:-1] for l in f.readlines()]
+            for dt in dt_toks:
+                tok = dt.split(' ')[0]
+                if tok not in total_tok_set:
+                    total_tok_set.add(tok)
+                    total_dt_toks.append(dt)
+    f_name = '-'.join([dict_txt.rpartition('.')[2] for dict_txt in dict_txt_list])
+    with open(os.path.join(config.data_dir, "jieba_dict", "dict.txt.%s" % f_name), "w") as f:
+        for dt in total_dt_toks:
+            f.write("%s\n" % dt)
+        print("%s saved." % f.name)
+
+
 if __name__ == '__main__':
     translate_jieba_dict()
     create_jieba_dict_pycanto()
@@ -223,5 +255,11 @@ if __name__ == '__main__':
     train_data, valid_data = train_valid_split(data)
     save_train_valid(train_data, valid_data)
 
-    save_embedding("cantonese/wiki.zh_yue.vec", "canto.pkl")
-    save_embedding("standard_chinese/wiki.zh.vec", "stdch.pkl")
+    save_embedding("cantonese/wiki.zh_yue.vec", "canto_wiki.pkl")
+    save_embedding("standard_chinese/wiki.zh.vec", "stdch_wiki.pkl")
+
+    merge_dict_txt_with_embedding_tokens(
+        "dict.txt.pycanto", "canto_wiki.pkl")
+
+    # merge_dict_txt_list(
+    #     ["dict.txt.pycanto", "dict.txt.big_trad"])

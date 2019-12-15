@@ -13,6 +13,15 @@ class EmbeddingsCoverage(object):
         ('canto', 'train', 'pycanto'): "train.canto.sent.tok.dict.txt.pycanto",
         ('canto', 'valid', 'pycanto'): "valid.canto.sent.tok.dict.txt.pycanto",
 
+        ('canto', 'train', 'pycanto-big_trad'): "train.canto.sent.tok.dict.txt.pycanto-big_trad",
+        ('canto', 'valid', 'pycanto-big_trad'): "valid.canto.sent.tok.dict.txt.pycanto-big_trad",
+
+        ('canto', 'train', 'pycanto-canto_wiki'): "train.canto.sent.tok.dict.txt.pycanto-canto_wiki",
+        ('canto', 'valid', 'pycanto-canto_wiki'): "valid.canto.sent.tok.dict.txt.pycanto-canto_wiki",
+
+        ('canto', 'train', 'pycanto-stdch_wiki'): "train.canto.sent.tok.dict.txt.pycanto-stdch_wiki",
+        ('canto', 'valid', 'pycanto-stdch_wiki'): "valid.canto.sent.tok.dict.txt.pycanto-stdch_wiki",
+
         ('stdch', 'train', 'char'): "train.stdch.sent.tok.char",
         ('stdch', 'valid', 'char'): "valid.stdch.sent.tok.char",
 
@@ -21,8 +30,8 @@ class EmbeddingsCoverage(object):
     }
 
     EMBEDDINGS = {
-        ('canto', 'fasttext'): "canto.pkl",
-        ('stdch', 'fasttext'): "stdch.pkl",
+        ('canto', 'fasttext'): "canto_wiki.pkl",
+        ('stdch', 'fasttext'): "stdch_wiki.pkl",
     }
 
     @classmethod
@@ -77,9 +86,9 @@ class EmbeddingsCoverage(object):
         else:
             emb_counter = defaultdict(int)
             for emb_file in embedding_list:
-                for k, v in pickle.load(
-                        open(os.path.join(config.data_dir, 'embedding', emb_file), "rb")).items():
-                    emb_counter[k] += v
+                for k in pickle.load(
+                        open(os.path.join(config.data_dir, 'embedding', emb_file), "rb")).keys():
+                    emb_counter[k] += 1
 
         inter_tokens = set(emb_counter.keys()).intersection(token_counter.keys())
         print ("=== Embeddings Coverage: %d / %d (%.4f)" %
@@ -92,16 +101,36 @@ class EmbeddingsCoverage(object):
 if __name__ == '__main__':
     EmbeddingsCoverage.check(
         dataset_param=('canto', 'ALL', 'pycanto'),
-        embedding_param=('canto', 'fasttext'))
+        embedding_param=('canto', 'fasttext'))  # 0.6591 / 0.0140
+
+    EmbeddingsCoverage.check(
+        dataset_param=('canto', 'ALL', 'pycanto-canto_wiki'),
+        embedding_param=('canto', 'fasttext'))  # 0.6873 / 0.0146
+
+    EmbeddingsCoverage.check(
+        dataset_param=('canto', 'ALL', 'pycanto-stdch_wiki'),
+        embedding_param=('canto', 'fasttext'))  # 0.6765 / 0.0143
+
+    EmbeddingsCoverage.check(
+        dataset_param=('canto', 'ALL', 'pycanto-big_trad'),
+        embedding_param=('canto', 'fasttext'))  # 0.6527 / 0.0136
+
+    EmbeddingsCoverage.check(
+        dataset_param=('canto', 'ALL', 'pycanto'),
+        embedding_param=('ALL', 'fasttext'))  # 0.6906 / 0.0023
+
+    EmbeddingsCoverage.check(
+        dataset_param=('canto', 'ALL', 'pycanto'),
+        embedding_param=('stdch', 'fasttext'))  # 0.6896 / 0.0023
 
     EmbeddingsCoverage.check(
         dataset_param=('canto', 'ALL', 'char'),
-        embedding_param=('canto', 'fasttext'))
+        embedding_param=('canto', 'fasttext'))  # 0.9636  / 0.0149
 
     EmbeddingsCoverage.check(
         dataset_param=('stdch', 'ALL', 'big_trad'),
-        embedding_param=('stdch', 'fasttext'))
+        embedding_param=('stdch', 'fasttext'))  # 0.8093 / 0.0025
 
     EmbeddingsCoverage.check(
         dataset_param=('stdch', 'ALL', 'char'),
-        embedding_param=('stdch', 'fasttext'))
+        embedding_param=('stdch', 'fasttext'))  # 0.9901 / 0.0023

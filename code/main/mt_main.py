@@ -84,8 +84,8 @@ def main():
         if not (os.path.exists(params['canto_embedding_path']) or
                 os.path.exists(params['stdch_embedding_path'])):
             dao.download_embedding()
-            dao.save_embedding("cantonese/wiki.zh_yue.vec", "canto.pkl")
-            dao.save_embedding("standard_chinese/wiki.zh.vec", "stdch.pkl")
+            dao.save_embedding("cantonese/wiki.zh_yue.vec", "canto_wiki.pkl")
+            dao.save_embedding("standard_chinese/wiki.zh.vec", "stdch_wiki.pkl")
         return
 
     ########### PREPROCESSING
@@ -143,36 +143,36 @@ def main():
             'stdch': np.random.rand(params['vocab_size'], params['embeddings_dim'])
         }
         not_found_count = {'stdch': 0, 'canto': 0}
-        for src in ['stdch', 'canto']:
+        for src, matrix_name in [('stdch', 'encoder_embeddings_matrix'),
+                                 ('canto', 'decoder_embeddings_matrix')]:
             not_found_count = 0
             for token, idx in word_to_idx.items():
                 if token in pretrained_embeddings[src]:
-                    embedding_matrix[src][idx]=pretrained_embeddings[src][token]
+                    embedding_matrix[src][idx] = pretrained_embeddings[src][token]
                 else:
                     not_found_count += 1
                     if not_found_count < 10:
                         print ("No pretrained embedding for (only first 10 such cases will be printed. other prints are suppressed) ",token)
             print ("(%s)not found count = " % src, not_found_count)
-        params['encoder_embeddings_matrix'] = embedding_matrix['stdch']
-        params['decoder_embeddings_matrix'] = embedding_matrix['canto']
+        params[matrix_name] = embedding_matrix[src]
 
-        # if params['use_additional_info_from_pretrained_embeddings']:
-        #     additional_count=0
-        #     tmp=[]
-        #     for token in pretrained_embeddings:
-        #         if token not in preprocessing.word_to_idx:
-        #             preprocessing.word_to_idx[token] = preprocessing.word_to_idx_ctr
-        #             preprocessing.idx_to_word[preprocessing.word_to_idx_ctr] = token
-        #             preprocessing.word_to_idx_ctr+=1
-        #             tmp.append(pretrained_embeddings[token])
-        #             additional_count+=1
-        #     #print "additional_count = ",additional_count
-        #     params['vocab_size'] = preprocessing.word_to_idx_ctr
-        #     tmp = np.array(tmp)
-        #     encoder_embedding_matrix = np.vstack([encoder_embedding_matrix,tmp])
-        #     decoder_embedding_matrix = np.vstack([decoder_embedding_matrix,tmp])
-        #     #print "decoder_embedding_matrix.shape ",decoder_embedding_matrix.shape
-        #     #print "New vocab size = ",params['vocab_size']
+    if params['use_additional_info_from_pretrained_embeddings']:
+        for src, matrix_name in [('stdch', 'encoder_embeddings_matrix'),
+                                 ('canto', 'decoder_embeddings_matrix')]:
+            additional_count = 0
+            tmp = []
+            for token in pretrained_embeddings[src]:
+                if token not in preprocessing.word_to_idx:
+                    preprocessing.word_to_idx[token] = preprocessing.word_to_idx_ctr
+                    preprocessing.idx_to_word[preprocessing.word_to_idx_ctr] = token
+                    preprocessing.word_to_idx_ctr += 1
+                    tmp.append(pretrained_embeddings[src][token])
+                    additional_count += 1
+            print ("additional_count(%s) = %s " % (src, additional_count))
+            tmp = np.array(tmp)
+            params[matrix_name] = np.vstack([params[matrix_name], tmp])
+        #print "New vocab size = ",params['vocab_size']
+        params['vocab_size'] = preprocessing.word_to_idx_ctr
 
     # TRAIN/DEBUG
     if mode == 'train' or mode == "debug":

@@ -21,8 +21,8 @@ use_reverse_encoder = True
 share_encoder_decoder_embeddings = True
 use_pretrained_embeddings = True
 pretrained_embeddings_are_trainable = False
-canto_embedding_path = data_dir + "embedding/canto.pkl"
-stdch_embedding_path = data_dir + "embedding/stdch.pkl"
+canto_embedding_path = data_dir + "embedding/canto_wiki.pkl"
+stdch_embedding_path = data_dir + "embedding/stdch_wiki.pkl"
 use_additional_info_from_pretrained_embeddings = True  # if some word is not in training data set but is there in pretrained embeddings: mark True to add such words also. Otherwise mark False
 use_additional_info_from_pretrained_embeddings = False
 
