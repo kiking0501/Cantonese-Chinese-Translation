@@ -1,13 +1,13 @@
 # Cantonese-Chinese-Translation
 
-An Experimental study on *Standard-Chinese* to *Cantonese* translator models.
+An experimental study on *Standard-Chinese* to *Cantonese* translator models.
 
-Two major approach is included:
+Two major approaches are included:
 
 - Copy-Enriched Seq2Seq Models (Jhamtani., 2017)
 - Enriched dictionary table by Translation-Matrix (Mikolov., 2013)
 
-The code is initiated from work by Jhamtani; link to the original code: https://github.com/harsh19/Shakespearizing-Modern-English
+This code is initiated from the work by Jhamtani; link to the original code: https://github.com/harsh19/Shakespearizing-Modern-English
 
 
 # Requirements
@@ -27,18 +27,15 @@ to download the pre-trained cantonese and chinese embeddings from [fastText](htt
 - Run: </br>
 `python mt_main.py preprocessing` </br>
 to preprocess and save train/valid/test data.
-- Token-dictionaries can be modified at `prepro.py`
+- The used dictionaries for tokenization can be changed at `prepro.py`
 
 #### Copy-Enriched Seq-to-Seq Model: 
 - First run pre-processing
 - Run
-`python mt_main.py train 10 pointer_model` </br>
-  to start the training
+`python mt_main.py train <iter_num> <output_model_name>` </br> or
+`python mt_main.py <valid/test> <saved_model_name> <inference_type>`
 - Training settings can be modified at `configuration.py`
 - Trained models and results are saved in /data/tmp/
-- Run
-`python mt_main.py <valid/test> <saved_model_name> <inference_type>`
-to check performance of a particular model
 - Link to the original paper: https://arxiv.org/abs/1707.01161
 
 #### Translation-Matrix Model: 
@@ -62,7 +59,7 @@ to check performance of the two baseline methods
 
 ### Data Collection
 - Movie transcripts are used to create a collection of sentences in pairs {Standard-Chinese(繁), Cantonese (粵)} as the parallel corpora. (/data/transcript/)
-- A Cantonese-SC dictionary mapping consisting ~1600 entries are created from the online database from [A Comparative Study of Modern Chinese and Cantonese in the Development of Teaching Resource](https://apps.itsc.cuhk.edu.hk/hanyu/Page/Intro.aspx) (/data/static/canto2stdch_full.dict, see creation script at `crawl_dict_map.py`)
+- A Cantonese-SC dictionary mapping consisting ~1600 entries are created from the online database from [A Comparative Study of Modern Chinese and Cantonese in the Development of Teaching Resource](https://apps.itsc.cuhk.edu.hk/hanyu/Page/Intro.aspx) (/data/static/canto2stdch_full.dict, see script at `crawl_dict_map.py`)
 
 
 ### Preprocessing
@@ -81,7 +78,8 @@ to check performance of the two baseline methods
 - *OSError: [Errno 12] Cannot allocate memory*: Make sure one have enough RAM; restart the computer, or try [adding a new swapfile](https://askubuntu.com/questions/927854/how-do-i-increase-the-size-of-swapfile-without-removing-it-in-the-terminal) (e.g. make to 4G total).
 
 
-# Reference (to be updated)
+# Reference 
+(To be updated)
 ```
 @article{jhamtani2017shakespearizing,
   title={Shakespearizing Modern Language Using Copy-Enriched Sequence-to-Sequence Models},
