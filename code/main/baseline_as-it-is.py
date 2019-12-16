@@ -5,8 +5,8 @@ import configuration as config
 BLEU_OUTPUT_FILE = "as-it-is_baseline.BLEU"
 
 # Test Settings
-TEST_INPUT_CHAR = "valid.stdch.sent.tok.char"
-TEST_GT_CHAR = "valid.canto.sent.tok.char"
+TEST_INPUT_CHAR = "test.stdch.sent.tok.char"
+TEST_GT_CHAR = "test.canto.sent.tok.char"
 
 if __name__ == '__main__':
     baseline_dir = os.path.join(config.data_dir, "baselines")

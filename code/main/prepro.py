@@ -9,17 +9,22 @@ import numpy as np
 
 class PreProcessing:
 
-    OUT_SRC = {
-        "train": "train.canto.sent",
-        "valid": "valid.canto.sent",
-    }
-
     INP_SRC = {
         "train": "train.stdch.sent",
         "valid": "valid.stdch.sent",
+        "test": "test.stdch.sent"
     }
+
+    OUT_SRC = {
+        "train": "train.canto.sent",
+        "valid": "valid.canto.sent",
+        "test": "test.canto.sent"
+    }
+
     OUT_TOK = "dict.txt.pycanto-canto_wiki"
     INP_TOK = "dict.txt.big_trad"
+    # OUT_TOK = "char"
+    # INP_TOK = "char"
 
     def __init__(self):
         self.unknown_word = "UNK".lower()

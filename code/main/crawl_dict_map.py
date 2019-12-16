@@ -22,19 +22,19 @@ if not os.path.exists(HTML_DIR):
     os.mkdir(HTML_DIR)
 
 TERM_LIST = [
-    # "天象、地理",  # 164
-    # "時間、節令",  # 247
-    # "礦物、自然物",  # 27
-    # "動物",  # 353
-    # "植物、糧菜、果品",  # 400
-    # "飲食",  # 668
-    # "服飾",  # 322
-    # "房屋",  # 259
-    # "家具、日常用品",  # 457
-    # "工具、材料",  # 407
-    # "商業、交通",  # 618
-    # "文化、娛樂",  # 475
-    # "人體",  # 431
+    "天象、地理",  # 164
+    "時間、節令",  # 247
+    "礦物、自然物",  # 27
+    "動物",  # 353
+    "植物、糧菜、果品",  # 400
+    "飲食",  # 668
+    "服飾",  # 322
+    "房屋",  # 259
+    "家具、日常用品",  # 457
+    "工具、材料",  # 407
+    "商業、交通",  # 618
+    "文化、娛樂",  # 475
+    "人體",  # 431
     "稱謂",  # 1324
     "動詞",  # 5246
     "形容詞",  # 2730
@@ -170,8 +170,7 @@ def save_canto_dict_map(canto_emb_file="canto_wiki.pkl",
                     if len(stdch) > 4 or (len(stdch) - len(canto_w) > 2):
                         continue
                     stdch = re.sub(r'\(.*\)', '', stdch)
-                    stdch.strip('(')
-                    stdch.strip(')')
+                    stdch = re.sub('\(|\)', '', stdch)
                 clean_list.append(stdch)
             if clean_list:
                 canto_dict_map[canto_w] += clean_list

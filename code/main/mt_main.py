@@ -28,7 +28,9 @@ from prepro import PreProcessing
 usage = '''
 python mt_main.py train <num_of_iters> <model_name>
 OR
-python mt_main.py inference <saved_model_path> <greedy/beam>
+python mt_main.py inference <saved_model_name> <greedy/beam>
+OR
+python mt_main.py test <saved_model_name> <greedy/beam>
 OR
 python mt_main.py debug
 OR
@@ -42,6 +44,7 @@ print ("")
 ########################
 
 data_dir = config.data_dir
+transcript_files = config.transcript_files
 
 
 def main():
@@ -67,15 +70,17 @@ def main():
     params['lambd'] = config.lambd
     params['use_context_for_out'] = config.use_context_for_out
 
-    print("PARAMS:")
-    for key, value in params.items():
-        print (" -- ", key, " = ", value)
-    buckets = {0: {'max_input_seq_length': params['max_input_seq_length'], 'max_output_seq_length': params['max_output_seq_length']} }
-    print ("buckets = ", buckets)
 
-    # train
     mode = sys.argv[1]
     print ("mode = ", mode)
+
+    if mode not in ['validation', 'test']:
+        print("PARAMS:")
+        for key, value in params.items():
+            print (" -- ", key, " = ", value)
+        buckets = {0: {'max_input_seq_length': params['max_input_seq_length'], 'max_output_seq_length': params['max_output_seq_length']} }
+        print ("buckets = ", buckets)
+
 
     ########### INIT
     if mode == "init":
@@ -86,18 +91,21 @@ def main():
             dao.download_embedding()
             dao.save_embedding("cantonese/wiki.zh_yue.vec", "canto_wiki.pkl")
             dao.save_embedding("standard_chinese/wiki.zh.vec", "stdch_wiki.pkl")
+        dao.merge_dict_txt_with_embedding_tokens("dict.txt.pycanto", "canto_wiki.pkl")
         return
 
     ########### PREPROCESSING
 
     if mode == "preprocessing":
-
-        dao.save_train_valid(*dao.train_valid_split(dao.read_transcript("01.srt")))
+        trans_data = []
+        for trans_file in transcript_files:
+            trans_data += dao.read_clean_transcript_pairs(trans_file)
+        dao.save_train_valid(*dao.train_valid_split(trans_data))
 
         # preprocesing
         print("=" * 5)
         preprocessing = PreProcessing()
-        splits = ["train", "valid"]  # , "test"]
+        splits = ["train", "valid", "test"]
         preprocessing.loadVocab('train')
         if params['do_vocab_pruning']:
             preprocessing.pruneVocab(max_vocab_size=params['max_vocab_size'])
@@ -115,7 +123,7 @@ def main():
     params['preprocessing'] = preprocessing
     train = data['train']
     val = data['valid']
-    # test = data['test']
+    test = data['test']
 
     # DEBUG
     if mode == "debug":
@@ -154,7 +162,7 @@ def main():
                     if not_found_count < 10:
                         print ("No pretrained embedding for (only first 10 such cases will be printed. other prints are suppressed) ",token)
             print ("(%s)not found count = " % src, not_found_count)
-        params[matrix_name] = embedding_matrix[src]
+            params[matrix_name] = embedding_matrix[src]
 
     if params['use_additional_info_from_pretrained_embeddings']:
         for src, matrix_name in [('stdch', 'encoder_embeddings_matrix'),
@@ -192,39 +200,65 @@ def main():
         _ = rnn_model.getModel(params, mode='train', reuse=False, buckets=buckets)
         rnn_model.trainModel(config=params, train_feed_dict=train_buckets, val_feed_dct=val, reverse_vocab=preprocessing.idx_to_word, do_init=True)
 
-    # # INFERENCE
-    # elif mode == "inference":
-    #     saved_model_path = sys.argv[2]
-    #     print "saved_model_path = ",saved_model_path
-    #     inference_type = sys.argv[3] # greedy / beam
-    #     print "inference_type = ",inference_type
-    #     params['saved_model_path'] = saved_model_path
-    #     rnn_model = solver.Solver(params, buckets=None, mode='inference')
-    #     _ = rnn_model.getModel(params, mode='inference', reuse=False, buckets=None)
-    #     print "----Running inference-----"
+    # Validation
+    elif mode == "validation":
+        saved_model_path = os.path.join(config.data_dir, 'tmp', sys.argv[2])
+        print ("saved_model_path = ",saved_model_path)
 
-    #     #val
-    #     val_encoder_inputs, val_decoder_inputs, val_decoder_outputs, val_decoder_outputs_matching_inputs = val
-    #     #print "val_encoder_inputs = ",val_encoder_inputs
-    #     if len(val_decoder_outputs.shape)==3:
-    #         val_decoder_outputs=np.reshape(val_decoder_outputs, (val_decoder_outputs.shape[0], val_decoder_outputs.shape[1]))
-    #     decoder_outputs_inference, decoder_ground_truth_outputs = rnn_model.solveAll(params, val_encoder_inputs, val_decoder_outputs, preprocessing.idx_to_word, inference_type=inference_type)
-    #     validOutFile_name = saved_model_path+".valid.output"
-    #     original_data_path = data_src + "valid.original.nltktok"
-    #     BLEUOutputFile_path = saved_model_path + ".valid.BLEU"
-    #     utilities.getBlue(validOutFile_name, original_data_path, BLEUOutputFile_path, decoder_outputs_inference, decoder_ground_truth_outputs, preprocessing)
-    #     print "VALIDATION: ",open(BLEUOutputFile_path,"r").read()
+        inference_type = sys.argv[3] # greedy / beam
+        print( "inference_type = ",inference_type)
 
-    #     #test
-    #     test_encoder_inputs, test_decoder_inputs, test_decoder_outputs, test_decoder_outputs_matching_inputs = test
-    #     if len(test_decoder_outputs.shape)==3:
-    #         test_decoder_outputs=np.reshape(test_decoder_outputs, (test_decoder_outputs.shape[0], test_decoder_outputs.shape[1]))
-    #     decoder_outputs_inference, decoder_ground_truth_outputs = rnn_model.solveAll(params, test_encoder_inputs, test_decoder_outputs, preprocessing.idx_to_word, inference_type=inference_type)
-    #     validOutFile_name = saved_model_path+".test.output"
-    #     original_data_path = data_src + "test.original.nltktok"
-    #     BLEUOutputFile_path = saved_model_path + ".test.BLEU"
-    #     utilities.getBlue(validOutFile_name, original_data_path, BLEUOutputFile_path, decoder_outputs_inference, decoder_ground_truth_outputs, preprocessing)
-    #     print "TEST: ",open(BLEUOutputFile_path,"r").read()
+        params['saved_model_path'] = saved_model_path
+        rnn_model = solver.Solver(params, buckets=None, mode='inference')
+        _ = rnn_model.getModel(params, mode='inference', reuse=False, buckets=None)
+        print ("----Running on Validation Set-----")
+
+        #val
+        val_encoder_inputs, val_decoder_inputs, val_decoder_outputs, val_decoder_outputs_matching_inputs = val
+        #print "val_encoder_inputs = ",val_encoder_inputs
+        if len(val_decoder_outputs.shape)==3:
+            val_decoder_outputs=np.reshape(val_decoder_outputs, (val_decoder_outputs.shape[0], val_decoder_outputs.shape[1]))
+        decoder_outputs_inference, decoder_ground_truth_outputs = rnn_model.solveAll(
+            params, val_encoder_inputs, val_decoder_outputs, preprocessing.idx_to_word,
+            inference_type=inference_type, print_progress=False)
+
+        model_name = saved_model_path.rpartition('/')[2]
+        validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".valid.output")
+        original_data_path = data_dir + preprocessing.OUT_SRC['valid'] + '.tok.char'
+        BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".valid.BLEU")
+        utilities.getBlue(
+            validOutFile_name, original_data_path, BLEUOutputFile_path,
+            decoder_outputs_inference, decoder_ground_truth_outputs,
+            preprocessing)
+
+        print ("VALIDATION: ",open(BLEUOutputFile_path,"r").read())
+
+    # TEST
+    elif mode == "test":
+        saved_model_path = os.path.join(config.data_dir, 'tmp', sys.argv[2])
+        print ("saved_model_path = ",saved_model_path)
+
+        inference_type = sys.argv[3] # greedy / beam
+        print ("inference_type = ",inference_type)
+        rint ("----Running on Test Set-----")
+
+        test_encoder_inputs, test_decoder_inputs, test_decoder_outputs, test_decoder_outputs_matching_inputs = test
+        if len(test_decoder_outputs.shape)==3:
+            test_decoder_outputs=np.reshape(test_decoder_outputs, (test_decoder_outputs.shape[0], test_decoder_outputs.shape[1]))
+        decoder_outputs_inference, decoder_ground_truth_outputs = rnn_model.solveAll(
+            params, test_encoder_inputs, test_decoder_outputs, preprocessing.idx_to_word,
+            inference_type=inference_type, print_progress=False)
+
+        model_name = saved_model_path.rpartition('/')[2]
+        validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".test.output")
+        original_data_path = data_dir + preprocessing.OUT_SRC['test'] + '.tok.char'
+        BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".test.BLEU")
+        utilities.getBlue(
+            validOutFile_name, original_data_path, BLEUOutputFile_path,
+            decoder_outputs_inference, decoder_ground_truth_outputs,
+            preprocessing)
+
+        print ("TEST: ",open(BLEUOutputFile_path,"r").read())
 
     else:
         print ("Please see usage")

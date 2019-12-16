@@ -64,7 +64,9 @@ T_NUM = {
 }
 
 
-def read_transcript(file_name, data_num=None):
+# for original .srt file
+def read_bilingual_transcript(file_name, data_num=None):
+    ''' bilingual transcript separated by new-line '''
     if data_num is None:
         data_num = T_NUM.get(file_name)
     if data_num is None:
@@ -79,20 +81,62 @@ def read_transcript(file_name, data_num=None):
     return li
 
 
-def train_valid_split(data, train_ratio=0.8):
-    ''' data should be a list of tuples of sentences (std-chinese, cantonese) '''
+# for original .srt file
+def save_clean_transcript(file_name, encoding="utf8", ensure_trad=True):
+    with open(os.path.join(data_dir, "transcript", file_name), 'r', encoding=encoding) as f:
+        data = f.read()
+    with open(os.path.join(data_dir, "transcript", "clean", file_name.partition('.')[0]+'.original'), "w") as f:
+        for ind, s in enumerate(srt.parse(data)):
+            if ensure_trad:
+                f.write("%s %s\n" % (ind, s2t.convert(s.content.replace('\n', ' '))))
+            else:
+                f.write("%s %s\n" % (ind, s.content.replace('\n', ' ')))
+        print("%s saved." % f.name)
+
+
+def read_clean_transcript_pairs(name):
+    data = []
+    with open(os.path.join(data_dir, "transcript", "clean", "%s.original" % name)) as f1:
+        with open(os.path.join(data_dir, "transcript", "clean", "%s.translate" % name)) as f2:
+            for l1, l2 in zip(f1.readlines(), f2.readlines()):
+                l1p, l2p = l1.partition(' '), l2.partition(' ')
+                if l1p[0] != l2p[0]:
+                    raise ValueError("(%s) Index is different for: (%s vs %s)!" % (name, l1, l2))
+                data.append((l1p[2][:-1], l2p[2][:-1]))
+    return data
+
+
+def train_valid_split(data, train_ratio=0.8, test_num=500):
+    ''' input: data(list)
+               test_num(int): use None if do not want test data'''
     np.random.seed(2046)
     shuffle_ids = list(range(len(data)))
     np.random.shuffle(list(range(len(data))))
-    num_train = int(len(data) * train_ratio)
+
+    if test_num is not None:
+        test_ids = shuffle_ids[-test_num:]
+        shuffle_ids = shuffle_ids[:-test_num]
+    else:
+        test_ids = None
+    num_train = int((len(shuffle_ids)) * train_ratio)
     train_ids, valid_ids = shuffle_ids[:num_train], shuffle_ids[num_train:]
-    return [data[id_] for id_ in train_ids], [data[id_] for id_ in valid_ids]
+
+    if test_num is not None:
+        return ([data[id_] for id_ in train_ids],
+                [data[id_] for id_ in valid_ids],
+                [data[id_] for id_ in test_ids])
+    else:
+        return ([data[id_] for id_ in train_ids],
+                [data[id_] for id_ in valid_ids])
 
 
-def save_train_valid(train_data, valid_data):
+def save_train_valid(train_data, valid_data, test_data=None):
     ''' train_data / valid_data should be a list of tuples of sentences (std-chinese, cantonese) '''
 
-    for split, data in [("train", train_data), ("valid", valid_data)]:
+    for split, data in [
+            ("train", train_data), ("valid", valid_data), ("test", test_data)]:
+        if data is None:
+            continue
         stdch_f = open(os.path.join(data_dir, "%s.stdch.sent" % split), "w")
         canto_f = open(os.path.join(data_dir, "%s.canto.sent" % split), "w")
         for li in data:
@@ -100,18 +144,19 @@ def save_train_valid(train_data, valid_data):
             canto_f.write("%s\n" % li[1])
         stdch_f.close()
         canto_f.close()
+        print("==== Split: %s has %d data." % (split, len(data)))
         print("%s saved." % stdch_f.name)
         print("%s saved." % canto_f.name)
         save_sen2tok("%s.stdch.sent" % split, 'char')
         save_sen2tok("%s.canto.sent" % split, 'char')
 
 
-def load_jieba(dict_txt=None):
+def load_jieba(dict_txt=None, verbose=False):
     ''' load jieba with the stated dictionary txt (valid after ver 0.28 '''
     if dict_txt is None:
         dict_txt = "dict.txt.big"
     jieba.set_dictionary(os.path.join(data_dir, "jieba_dict", dict_txt))
-    print("Successfully set Jieba-dict to '%s'. " % dict_txt)
+    if verbose: print("Successfully set Jieba-dict to '%s'. " % dict_txt)
 
 
 def char_cut(ori_sentok):
@@ -216,13 +261,13 @@ def save_embedding(file_name, output_name, ensure_trad=True):
 
 def merge_dict_txt_with_embedding_tokens(dict_txt, emb_file):
     print("Merging %s with %s..." % (dict_txt, emb_file))
-    with open(os.path.join(config.data_dir, "jieba_dict", dict_txt)) as f:
+    with open(os.path.join(data_dir, "jieba_dict", dict_txt)) as f:
         dt_toks = [l[:-1] for l in f.readlines()]
         tok_set = set([dt.split(' ')[0] for dt in dt_toks])
     emb_toks = pickle.load(
-        open(os.path.join(config.data_dir, 'embedding', emb_file), "rb")).keys()
-    dt_toks += [et for et in emb_toks if et not in tok_set and dao.DL.lang(et) == 'CHINESE']
-    with open(os.path.join(config.data_dir, "jieba_dict", dict_txt + '-' + emb_file.partition('.')[0]), "w") as f:
+        open(os.path.join(data_dir, 'embedding', emb_file), "rb")).keys()
+    dt_toks += [et for et in emb_toks if et not in tok_set and DL.lang(et) == 'CHINESE']
+    with open(os.path.join(data_dir, "jieba_dict", dict_txt + '-' + emb_file.partition('.')[0]), "w") as f:
         for dt in dt_toks:
             f.write("%s 1\n" % dt)
         print("%s saved." % f.name)
@@ -233,7 +278,7 @@ def merge_dict_txt_list(dict_txt_list):
     total_dt_toks = []
     total_tok_set = set()
     for dict_txt in dict_txt_list:
-        with open(os.path.join(config.data_dir, "jieba_dict", dict_txt)) as f:
+        with open(os.path.join(data_dir, "jieba_dict", dict_txt)) as f:
             dt_toks = [l[:-1] for l in f.readlines()]
             for dt in dt_toks:
                 tok = dt.split(' ')[0]
@@ -241,7 +286,7 @@ def merge_dict_txt_list(dict_txt_list):
                     total_tok_set.add(tok)
                     total_dt_toks.append(dt)
     f_name = '-'.join([dict_txt.rpartition('.')[2] for dict_txt in dict_txt_list])
-    with open(os.path.join(config.data_dir, "jieba_dict", "dict.txt.%s" % f_name), "w") as f:
+    with open(os.path.join(data_dir, "jieba_dict", "dict.txt.%s" % f_name), "w") as f:
         for dt in total_dt_toks:
             f.write("%s\n" % dt)
         print("%s saved." % f.name)
@@ -251,9 +296,9 @@ if __name__ == '__main__':
     translate_jieba_dict()
     create_jieba_dict_pycanto()
 
-    data = read_transcript("01.srt")
-    train_data, valid_data = train_valid_split(data)
-    save_train_valid(train_data, valid_data)
+    data = read_bilingual_transcript("01.srt")
+    train_data, valid_data, test_data = train_valid_split(data)
+    save_train_valid(train_data, valid_data, test_data)
 
     save_embedding("cantonese/wiki.zh_yue.vec", "canto_wiki.pkl")
     save_embedding("standard_chinese/wiki.zh.vec", "stdch_wiki.pkl")

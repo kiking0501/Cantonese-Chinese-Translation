@@ -9,9 +9,9 @@ DICT_OUTPUT_FILE = "dictionary_baseline.output"
 BLEU_OUTPUT_FILE = "dictionary_baseline.BLEU"
 
 # Test Settings
-DICT_FILE = "static/canto2stdch.dict"
-TEST_INPUT_TOKENIZED = "valid.stdch.sent.tok.dict.txt.big_trad"
-TEST_GT_CHAR = "valid.canto.sent.tok.char"
+DICT_FILE = "static/simple.dict"
+TEST_INPUT_TOKENIZED = "test.stdch.sent.tok.dict.txt.big_trad"
+TEST_GT_CHAR = "test.canto.sent.tok.char"
 
 
 def readDict(dictFile):
@@ -26,55 +26,59 @@ def readDict(dictFile):
     return dictionary
 
 
-def create_regax_map(dictionary):
-    regax_map = defaultdict(list)
+def create_regex_map(dictionary):
+    regex_map = defaultdict(list)
     for w in dictionary:
-        regax_map[len(w)].append(w)
+        regex_map[len(w)].append(w)
 
-    regax_map = {
+    regex_map = {
         # mapping words except included in "{}"
-        k: re.compile("(%s)(?![^{]*})" % "|".join(regax_map[k]))
-        for k in regax_map.keys()
+        k: re.compile("(%s)(?![^{]*})" % "|".join(regex_map[k]))
+        for k in regex_map.keys()
     }
-    return regax_map
+    return regex_map
 
 
-def map_sentence_by_regax(sentence, dictionary, regax_map):
+def map_sentence_by_regex(sentence, dictionary, regex_map):
     def dictrepl(matchobj):
         return '{' + dictionary[matchobj.group()] + '}'
 
     new_sentence = sentence
-    for k in sorted(regax_map.keys(), reverse=True):
-        new_sentence = regax_map[k].sub(dictrepl, new_sentence)
+    for k in sorted(regex_map.keys(), reverse=True):
+        new_sentence = regex_map[k].sub(dictrepl, new_sentence)
     return new_sentence
 
 
 def generate_output(dictFile, srcFile, trgFile, map_type="replace"):
-    ''' map_type can either be "replace" or "regax"
+    ''' map_type can either be "replace" or "regex"
             "replace": tokenize before mapping
-            "regax" : direct mapping
+            "regex" : direct mapping
     '''
     dictionary = readDict(dictFile)
-    regax_map = create_regax_map(dictionary)
+    regex_map = create_regex_map(dictionary)
 
     with open(srcFile) as src_f:
         srcLines = src_f.readlines()
 
         with open(trgFile, "w") as trg_f:
             for sentence in srcLines:
-                if map_type == 'regax':
+                new_sentence = sentence
+                if map_type == 'regex':
                     new_sentok = []
                     for st in sentence[:-1].split(" "):
                         new_sentok += [st, " "]
                     new_sentok = new_sentok[:-1]
                     new_sentok = _replace_space(new_sentok)
                     new_sentence = " ".join(new_sentok)
-                    new_sentence = map_sentence_by_regax(new_sentence, dictionary, regax_map)
+                    new_sentence = map_sentence_by_regex(new_sentence, dictionary, regex_map)
+                    new_sentence = re.sub('{|}', '', new_sentence)
                 elif map_type == "replace":
                     new_sentok = sentence[:-1].split(" ")
                     new_sentok = [dictionary.get(st, st) for st in new_sentok]
                     new_sentok = char_cut(new_sentok)
                     new_sentence = " ".join(new_sentok)
+                else:
+                    raise ValueError("Unknown map_type %s!" % map_type)
                 trg_f.write("%s\n" % new_sentence)
         print("%s saved." % trg_f.name)
 

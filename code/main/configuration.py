@@ -1,7 +1,7 @@
 data_dir = "../../data/"
 
 # GPU
-use_gpu = False
+use_gpu = True
 
 # preprocessing params
 max_input_seq_length = 25
@@ -9,6 +9,7 @@ max_output_seq_length = 25
 # #dropout_val = 0.2
 do_vocab_pruning = True
 max_vocab_size = 12000
+transcript_files = ['01', '01-2', '02', '03', '04', '05', '06', '07']
 
 # Pointer or seq2seq
 use_pointer = False
