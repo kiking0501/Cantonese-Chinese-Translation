@@ -15,9 +15,9 @@ This code is initiated from the work by Jhamtani; link to the original code: htt
 
 - [Requirements](#requirements)
 
-- [Instructions to run](#instructions)
+- [Instructions to run](#instructions-to-run)
 
-- [Details of Implementation](#implementation)
+- [Details of Implementation](#details-of-implementation)
 
 - [Troubleshoot](#troubleshoot)
 
@@ -28,14 +28,14 @@ This code is initiated from the work by Jhamtani; link to the original code: htt
   
 
 
-# Requirements {#requirements}
+# Requirements
 - Python 3.5
 
 - Tensorflow 1.1.0 (framework)
 
   
 
-# Instructions to run: {#instructions}
+# Instructions to run:
 Change working directory to /code/main/
 
 #### Initialization : 
@@ -80,7 +80,7 @@ to pre-process and save train/valid/test data.
 
   
 
-# Details of Implementation {#implementation}
+# Details of Implementation
 
 ### Data Collection
 - Movie transcripts are used to create a collection of sentences in pairs {Standard-Chinese(繁), Cantonese (粵)} as the parallel corpora. (/data/transcript/)
@@ -100,7 +100,7 @@ to pre-process and save train/valid/test data.
   
 
 
-# Troubleshoot {#troubleshoot}
+# Troubleshoot
 
 ### BLEU evaluation
 - *OSError: [Errno 12] Cannot allocate memory*: Make sure one have enough RAM; restart the computer, or try [adding a new swapfile](https://askubuntu.com/questions/927854/how-do-i-increase-the-size-of-swapfile-without-removing-it-in-the-terminal) (e.g. make to 4G total).
@@ -108,7 +108,7 @@ to pre-process and save train/valid/test data.
   
 
 
-# Reference {#reference}
+# Reference
 - Bojanowski, Piotr, et al. "Enriching word vectors with subword information." Transactions of the Association for Computational Linguistics 5 (2017): 135-146.
 
 - Keith Carlson, Allen Riddell, and Daniel Rockmore.  "Evaluating prose style transfer with the Bible". 2018. R. Soc. open sci. 5: 171829. http://dx.doi.org/10.1098/rsos.171920
@@ -165,10 +165,8 @@ Colin Cherry. 2012. "Paraphrasing for style". Proceedings of COLING 2012 pages 2
 
 - Summarized the result with a report titled "**Dialect as a Low-Resource Language: A Study on Standard-Chinese to Cantonese Translation with Movie Transcripts**" . Abstract:
 
-  ```latex
-  Cantonese, a major Chinese spoken dialect, can be viewed a a low-resource language given that its raw written form of collection is scarce. This project develops a pipeline to accomplish the low-resource Cantonese translation task with its closely-related rich-resource language counterparts, Standard Chinese (SC). The pipeline consists of two major translation methods: (1) the sequence-to-sequence neural-network approach suggested by Jhamtani et al. (2017), and (2) the translation-matrix approach suggested by Mikolov et al. (2013). Our implementation to perform machine translation from SC to Cantonese, in a simplified setting, do not have satisfying results nor perform better than the baselines. This report describes the similarities and difference between our implementation and the original approaches, and also discusses possible future improvement.
-  ```
-
+  > Cantonese, a major Chinese spoken dialect, can be viewed a a low-resource language given that its raw written form of collection is scarce. This project develops a pipeline to accomplish the low-resource Cantonese translation task with its closely-related rich-resource language counterparts, Standard Chinese (SC). The pipeline consists of two major translation methods: (1) the sequence-to-sequence neural-network approach suggested by Jhamtani et al. (2017), and (2) the translation-matrix approach suggested by Mikolov et al. (2013). Our implementation to perform machine translation from SC to Cantonese, in a simplified setting, do not have satisfying results nor perform better than the baselines. This report describes the similarities and difference between our implementation and the original approaches, and also discusses possible future improvement.
+  
   
 
 -  Submitted the report for the UWaterloo course CS680 - Introduction to Machine Learning. Grade 21/25. 
