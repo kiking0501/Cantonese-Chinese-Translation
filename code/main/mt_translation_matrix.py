@@ -21,11 +21,15 @@ canto_lm = FastText.load_fasttext_format(os.path.join(data_dir, "embedding", "ca
 
 ###### BLEU Testing #####
 
-# Output Settings
+## Output Settings
 TRANS_MATRIX_OUTPUT_FILE = "translatoin_matrix.output"
 BLEU_OUTPUT_FILE = "translation_matrix.BLEU"
 
-# Test Settings
+### Validation Settings
+# TEST_INPUT_TOKENIZED = "valid.stdch.sent.tok.dict.txt.big_trad"
+# TEST_GT_CHAR = "valid.canto.sent.tok.char"
+
+## Test Settings
 TEST_INPUT_TOKENIZED = "test.stdch.sent.tok.dict.txt.big_trad"
 TEST_GT_CHAR = "test.canto.sent.tok.char"
 
@@ -277,7 +281,7 @@ def inference(stdch_w_vec, W=None,
 if __name__ == '__main__':
 
     ### Check Internal Accuracy ###
-    THRESHOLD = 0.25
+    THRESHOLD = 0.7
 
 
     if not all([os.path.exists(os.path.join(output_dir, SETTINGS[src][split]))

@@ -2,13 +2,19 @@ import configuration as config
 import pickle
 from collections import defaultdict
 import os
-
+from dao import save_sen2tok
 
 class EmbeddingsCoverage(object):
 
     DATASETS = {
         ('canto', 'train', 'char'): "train.canto.sent.tok.char",
         ('canto', 'valid', 'char'): "valid.canto.sent.tok.char",
+
+        ('canto', 'train', 'big_trad'): "train.stdch.sent.tok.dict.txt.big_trad",
+        ('canto', 'valid', 'big_trad'): "valid.stdch.sent.tok.dict.txt.big_trad",
+
+        ('canto', 'train', 'big'): "train.stdch.sent.tok.dict.txt.big",
+        ('canto', 'valid', 'big'): "valid.stdch.sent.tok.dict.txt.big",
 
         ('canto', 'train', 'pycanto'): "train.canto.sent.tok.dict.txt.pycanto",
         ('canto', 'valid', 'pycanto'): "valid.canto.sent.tok.dict.txt.pycanto",
@@ -27,6 +33,9 @@ class EmbeddingsCoverage(object):
 
         ('stdch', 'train', 'big_trad'): "train.stdch.sent.tok.dict.txt.big_trad",
         ('stdch', 'valid', 'big_trad'): "valid.stdch.sent.tok.dict.txt.big_trad",
+
+        ('stdch', 'train', 'big'): "train.stdch.sent.tok.dict.txt.big",
+        ('stdch', 'valid', 'big'): "valid.stdch.sent.tok.dict.txt.big",
     }
 
     EMBEDDINGS = {
@@ -71,6 +80,9 @@ class EmbeddingsCoverage(object):
         print("=== Datasets(Tokenized Files): ")
         for li in dataset_list:
             print(li)
+            if not os.path.exists(os.path.join(config.data_dir, li)):
+                sen, dict_txt = li.split('.tok.')
+                save_sen2tok(sen, dict_txt)
         print("=== Embedding:")
         for li in embedding_list:
             print(li)

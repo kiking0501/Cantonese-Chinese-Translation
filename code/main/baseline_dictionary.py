@@ -4,11 +4,16 @@ import configuration as config
 import os
 from dao import _replace_space, char_cut
 
-# Output Settings
+## Output Settings
 DICT_OUTPUT_FILE = "dictionary_baseline.output"
 BLEU_OUTPUT_FILE = "dictionary_baseline.BLEU"
 
-# Test Settings
+### Validation Settings
+# DICT_FILE = "static/canto2stdch_full.dict"
+# TEST_INPUT_TOKENIZED = "valid.stdch.sent.tok.dict.txt.big_trad"
+# TEST_GT_CHAR = "valid.canto.sent.tok.char"
+
+## Test Settings
 DICT_FILE = "static/simple.dict"
 TEST_INPUT_TOKENIZED = "test.stdch.sent.tok.dict.txt.big_trad"
 TEST_GT_CHAR = "test.canto.sent.tok.char"

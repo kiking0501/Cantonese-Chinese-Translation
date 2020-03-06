@@ -7,6 +7,54 @@ import os
 import numpy as np
 
 
+def get_sen2tok(filename, dict_txt):
+    ''' Modification:
+            Tokenization with Jieba + Customized Dictionary
+    '''
+    tok_file = os.path.join(config.data_dir, filename + ".tok." + dict_txt)
+    #if not os.path.exists(tok_file):
+    dao.save_sen2tok(filename, dict_txt)
+
+    with open(tok_file, "r") as f:
+        sen_list = f.readlines()
+    # num = int(sen_list[0])
+    # sen_list = sen_list[1:]
+    return [sen[:-1].split(" ") for sen in sen_list]  # avoid "\n" at the end
+
+
+@config.CACHE("loadVocab.pkl")
+def _loadVocab(inp_sen_file, out_sen_file):
+
+    print("="*5, " loadVocab: %s / %s" % (inp_sen_file, out_sen_file))
+
+    inputs = get_sen2tok(inp_sen_file, PreProcessing.INP_TOK)
+    outputs = get_sen2tok(out_sen_file, PreProcessing.OUT_TOK)
+
+    word_counters, word_to_idx, word_to_idx_ctr, idx_to_word = PreProcessing.initVocabItems()
+
+    texts = inputs
+    for text in texts:
+        for token in text:
+            if token not in word_to_idx:
+                word_to_idx[token] = word_to_idx_ctr
+                idx_to_word[word_to_idx_ctr] = token
+                word_to_idx_ctr += 1
+                word_counters[token] = 0
+            word_counters[token] += 1
+    texts = outputs
+    for text in texts:
+        for token in text:
+            if token not in word_to_idx:
+                word_to_idx[token] = word_to_idx_ctr
+                idx_to_word[word_to_idx_ctr] = token
+                word_to_idx_ctr += 1
+                word_counters[token] = 0
+            word_counters[token] += 1
+
+    vocab_size = len(word_to_idx)
+    return word_to_idx, idx_to_word, vocab_size, word_to_idx_ctr, word_counters
+
+
 class PreProcessing:
 
     INP_SRC = {
@@ -21,43 +69,51 @@ class PreProcessing:
         "test": "test.canto.sent"
     }
 
-    OUT_TOK = "dict.txt.pycanto-canto_wiki"
+    OUT_TOK = "dict.txt.pycanto-stdch_wiki"
     INP_TOK = "dict.txt.big_trad"
     # OUT_TOK = "char"
     # INP_TOK = "char"
 
     def __init__(self):
-        self.unknown_word = "UNK".lower()
-        self.sent_start = "SENTSTART".lower()
-        self.sent_end = "SENTEND".lower()
-        self.pad_word = "PADWORD".lower()
+        self.sent_start, self.sent_end, self.pad_word, self.unknown_word = self._initVocabItems()
         self.special_tokens = [self.sent_start, self.sent_end, self.pad_word, self.unknown_word]
         self.word_counters, self.word_to_idx, self.word_to_idx_ctr, self.idx_to_word = self.initVocabItems()
 
-    def initVocabItems(self):
+    @staticmethod
+    def _initVocabItems():
+        unknown_word = "UNK".lower()
+        sent_start = "SENTSTART".lower()
+        sent_end = "SENTEND".lower()
+        pad_word = "PADWORD".lower()
+        special_tokens = [sent_start, sent_end, pad_word, unknown_word]
+        return special_tokens
+
+    @staticmethod
+    def initVocabItems():
+        sent_start, sent_end, pad_word, unknown_word = PreProcessing._initVocabItems()
         word_counters = {}
         word_to_idx = {}
         word_to_idx_ctr = 0
         idx_to_word = {}
 
-        word_to_idx[self.pad_word] = word_to_idx_ctr  # 0 is for padword
-        idx_to_word[word_to_idx_ctr] = self.pad_word
-        word_counters[self.pad_word] = 1
+        word_to_idx[pad_word] = word_to_idx_ctr  # 0 is for padword
+        idx_to_word[word_to_idx_ctr] = pad_word
+        word_counters[pad_word] = 1
         word_to_idx_ctr += 1
 
-        word_to_idx[self.sent_start] = word_to_idx_ctr  # 1 is for SENTSTART
-        word_counters[self.sent_start] = 1
-        idx_to_word[word_to_idx_ctr] = self.sent_start
+        word_to_idx[sent_start] = word_to_idx_ctr  # 1 is for SENTSTART
+        word_counters[sent_start] = 1
+        idx_to_word[word_to_idx_ctr] = sent_start
         word_to_idx_ctr += 1
 
-        word_to_idx[self.sent_end] = word_to_idx_ctr  # 2 is for SENTEND
-        word_counters[self.sent_end] = 1
-        idx_to_word[word_to_idx_ctr] = self.sent_end
+        word_to_idx[sent_end] = word_to_idx_ctr  # 2 is for SENTEND
+        word_counters[sent_end] = 1
+        idx_to_word[word_to_idx_ctr] = sent_end
         word_to_idx_ctr += 1
 
-        word_to_idx[self.unknown_word] = word_to_idx_ctr  # 3 is for UNK
-        word_counters[self.unknown_word] = 1
-        idx_to_word[word_to_idx_ctr] = self.unknown_word
+        word_to_idx[unknown_word] = word_to_idx_ctr  # 3 is for UNK
+        word_counters[unknown_word] = 1
+        idx_to_word[word_to_idx_ctr] = unknown_word
         word_to_idx_ctr += 1
 
         return word_counters, word_to_idx, word_to_idx_ctr, idx_to_word
@@ -66,51 +122,13 @@ class PreProcessing:
         ''' Modification:
                 Tokenization with Jieba + Customized Dictionary
         '''
-        tok_file = os.path.join(config.data_dir, filename + ".tok." + dict_txt)
-        #if not os.path.exists(tok_file):
-        dao.save_sen2tok(filename, dict_txt)
-
-        with open(tok_file, "r") as f:
-            sen_list = f.readlines()
-        # num = int(sen_list[0])
-        # sen_list = sen_list[1:]
-        return [sen[:-1].split(" ") for sen in sen_list]  # avoid "\n" at the end
+        return get_sen2tok(filename, dict_txt)
 
     def loadVocab(self, split):
         print("="*5, " loadData: split = ", split)
-
-        inputs = self.preprocess(self.INP_SRC[split], self.INP_TOK)
-        outputs = self.preprocess(self.OUT_SRC[split], self.OUT_TOK)
-
-        word_to_idx = self.word_to_idx
-        idx_to_word = self.idx_to_word
-        word_to_idx_ctr = self.word_to_idx_ctr
-        word_counters = self.word_counters
-
-        texts = inputs
-        for text in texts:
-            for token in text:
-                if token not in word_to_idx:
-                    word_to_idx[token] = word_to_idx_ctr
-                    idx_to_word[word_to_idx_ctr] = token
-                    word_to_idx_ctr += 1
-                    word_counters[token] = 0
-                word_counters[token] += 1
-        texts = outputs
-        for text in texts:
-            for token in text:
-                if token not in word_to_idx:
-                    word_to_idx[token] = word_to_idx_ctr
-                    idx_to_word[word_to_idx_ctr] = token
-                    word_to_idx_ctr += 1
-                    word_counters[token] = 0
-                word_counters[token] += 1
-
-        self.word_to_idx = word_to_idx
-        self.idx_to_word = idx_to_word
-        self.vocab_size = len(word_to_idx)
-        self.word_to_idx_ctr = word_to_idx_ctr
-        self.word_counters = word_counters
+        self.word_to_idx, self.idx_to_word, self.vocab_size, self.word_to_idx_ctr, self.word_counters \
+            = _loadVocab(self.INP_SRC[split], self.OUT_SRC[split])
+        return self.word_to_idx, self.idx_to_word, self.vocab_size, self.word_to_idx_ctr, self.word_counters
 
     def pruneVocab(self, max_vocab_size):
         word_to_idx = self.word_to_idx

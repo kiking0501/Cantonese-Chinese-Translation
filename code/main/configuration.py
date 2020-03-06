@@ -1,4 +1,16 @@
-data_dir = "../../data/"
+import os
+from cache import CACHE as _CACHE
+
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_PATH = os.path.join(BASE_PATH, "data")
+PKL_PATH = os.path.join(DATA_PATH, "pkl")
+
+
+def CACHE(name):
+    return _CACHE(name, dir_path=PKL_PATH)
+
+
+data_dir = DATA_PATH
 
 # GPU
 use_gpu = True
@@ -12,7 +24,7 @@ max_vocab_size = 12000
 transcript_files = ['01', '01-2', '02', '03', '04', '05', '06', '07']
 
 # Pointer or seq2seq
-use_pointer = False
+use_pointer = True
 
 # model config
 lstm_cell_size = 300
