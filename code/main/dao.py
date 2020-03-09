@@ -186,25 +186,28 @@ def _replace_space(ori_sentok):
     return [ori_sentok[0]] + new_sentok + [ori_sentok[-1]]
 
 
+def sen2tok(sen_list, dict_txt):
+    if dict_txt == 'char':
+        load_jieba()
+        sentok_list = [list(jieba.cut(sen, cut_all=False)) for sen in sen_list]
+        sentok_list = [_replace_space(sentok) for sentok in sentok_list]
+        sentok_list = [char_cut(sentok) for sentok in sentok_list]
+    else:
+        load_jieba(dict_txt)
+        sentok_list = [list(jieba.cut(sen, cut_all=False)) for sen in sen_list]  # avoid "\n"
+        sentok_list = [_replace_space(sentok) for sentok in sentok_list]
+    return sentok_list
+
+
 def save_sen2tok(file_name, dict_txt):
 
     print("Tokenizing %s with %s ..." % (file_name, dict_txt))
     with open(os.path.join(data_dir, file_name), "r") as f:
-        sen_list = f.readlines()
+        sen_list = [sen[:-1] for sen in f.readlines()]  # avoid "\n"
     # num = int(sen_list[0])
     # sen_list = sen_list[1:]
-
-    if dict_txt == 'char':
-        load_jieba()
-        sentok_list = [list(jieba.cut(sen[:-1], cut_all=False)) for sen in sen_list]  # avoid "\n"
-        sentok_list = [_replace_space(sentok) for sentok in sentok_list]
-        sentok_list = [char_cut(sentok) for sentok in sentok_list]
-        sentok_list = [" ".join(sentok) for sentok in sentok_list]
-    else:
-        load_jieba(dict_txt)
-        sentok_list = [list(jieba.cut(sen[:-1], cut_all=False)) for sen in sen_list]  # avoid "\n"
-        sentok_list = [_replace_space(sentok) for sentok in sentok_list]
-        sentok_list = [" ".join(sentok) for sentok in sentok_list]
+    sentok_list = sen2tok(sen_list, dict_txt)
+    sentok_list = [" ".join(sentok) for sentok in sentok_list]
 
     with open(os.path.join(data_dir, file_name + ".tok." + dict_txt), "w") as f:
         # f.write("%s\n" % num)
@@ -214,6 +217,21 @@ def save_sen2tok(file_name, dict_txt):
 
         print("Total: %d" % (len(sentok_list)))
         print("%s saved." % f.name)
+
+
+def get_sen2tok(filename, dict_txt):
+    ''' Modification:
+            Tokenization with Jieba + Customized Dictionary
+    '''
+    tok_file = os.path.join(data_dir, filename + ".tok." + dict_txt)
+    #if not os.path.exists(tok_file):
+    save_sen2tok(filename, dict_txt)
+
+    with open(tok_file, "r") as f:
+        sen_list = f.readlines()
+    # num = int(sen_list[0])
+    # sen_list = sen_list[1:]
+    return [sen[:-1].split(" ") for sen in sen_list]  # avoid "\n" at the end
 
 
 def download_embedding():

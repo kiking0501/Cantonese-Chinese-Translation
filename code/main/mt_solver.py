@@ -227,7 +227,7 @@ class Solver:
                         if val == 2: break  # sentend. TO DO: load this value from config
                         ret += (" " + reverse_vocab[val])
                     #print "decoder_ground_truth_outputs[i] = ",decoder_ground_truth_outputs[i]
-                    if i < len(decoder_ground_truth_outputs):
+                    if decoder_ground_truth_outputs is not None and i < len(decoder_ground_truth_outputs):
                         if print_gt:
                             gt = [reverse_vocab[j] for j in decoder_ground_truth_outputs[i]
                                   if reverse_vocab[j] != "padword"]
@@ -272,7 +272,9 @@ class Solver:
             if print_progress:
                 print ("Batch(i) = ", i)
             encoder_inputs_cur = encoder_inputs[i*batch_size:(i+1)*batch_size]
+
             decoder_ground_truth_cur = decoder_ground_truth_outputs[i*batch_size:(i+1)*batch_size]
+
             lim = len(encoder_inputs_cur)
             if len(encoder_inputs_cur) < batch_size:
                 gap = batch_size - len(encoder_inputs_cur)
@@ -290,9 +292,9 @@ class Solver:
                 pass
 
                 #Printing out attention matrix - Required for UNK replacement during post-processing
-                import pickle
-                pickle.dump(alpha, open("alpha.p", "wb"))
-                print ("Dumped alphas")
+            import pickle
+            pickle.dump(alpha, open("alpha.p", "wb"))
+            print ("Dumped alphas")
 
         return decoder_outputs_inference, decoder_ground_truth_outputs
 
@@ -348,7 +350,7 @@ class Solver:
             params, val_encoder_inputs, val_decoder_outputs, reverse_vocab,
             sess=sess, print_progress=True, show_num=5)
         validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".valid.output")
-        original_data_path = data_dir + params['preprocessing'].OUT_SRC['valid'] + '.tok.char'
+        original_data_path = data_dir + "/" + params['preprocessing'].OUT_SRC['valid'] + '.tok.char'
         BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".valid.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,

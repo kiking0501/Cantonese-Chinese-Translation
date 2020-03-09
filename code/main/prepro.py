@@ -7,28 +7,13 @@ import os
 import numpy as np
 
 
-def get_sen2tok(filename, dict_txt):
-    ''' Modification:
-            Tokenization with Jieba + Customized Dictionary
-    '''
-    tok_file = os.path.join(config.data_dir, filename + ".tok." + dict_txt)
-    #if not os.path.exists(tok_file):
-    dao.save_sen2tok(filename, dict_txt)
-
-    with open(tok_file, "r") as f:
-        sen_list = f.readlines()
-    # num = int(sen_list[0])
-    # sen_list = sen_list[1:]
-    return [sen[:-1].split(" ") for sen in sen_list]  # avoid "\n" at the end
-
-
 @config.CACHE("loadVocab.pkl")
-def _loadVocab(inp_sen_file, out_sen_file):
+def loadVocab(inp_sen_file, out_sen_file):
 
     print("="*5, " loadVocab: %s / %s" % (inp_sen_file, out_sen_file))
 
-    inputs = get_sen2tok(inp_sen_file, PreProcessing.INP_TOK)
-    outputs = get_sen2tok(out_sen_file, PreProcessing.OUT_TOK)
+    inputs = dao.get_sen2tok(inp_sen_file, PreProcessing.INP_TOK)
+    outputs = dao.get_sen2tok(out_sen_file, PreProcessing.OUT_TOK)
 
     word_counters, word_to_idx, word_to_idx_ctr, idx_to_word = PreProcessing.initVocabItems()
 
@@ -118,16 +103,12 @@ class PreProcessing:
 
         return word_counters, word_to_idx, word_to_idx_ctr, idx_to_word
 
-    def preprocess(self, filename, dict_txt):
-        ''' Modification:
-                Tokenization with Jieba + Customized Dictionary
+    def loadVocab(self, split="train"):
+        ''' ususally only called once for the training split
         '''
-        return get_sen2tok(filename, dict_txt)
-
-    def loadVocab(self, split):
         print("="*5, " loadData: split = ", split)
         self.word_to_idx, self.idx_to_word, self.vocab_size, self.word_to_idx_ctr, self.word_counters \
-            = _loadVocab(self.INP_SRC[split], self.OUT_SRC[split])
+            = loadVocab(self.INP_SRC[split], self.OUT_SRC[split])
         return self.word_to_idx, self.idx_to_word, self.vocab_size, self.word_to_idx_ctr, self.word_counters
 
     def pruneVocab(self, max_vocab_size):
@@ -155,54 +136,69 @@ class PreProcessing:
         self.word_to_idx_ctr = tmp_word_to_idx_ctr
         print ("vocab size after pruning = ", self.vocab_size)
 
-    def loadData(self, split):
-        print("="*5, " loadData: split = ", split)
-        inputs = self.preprocess(self.INP_SRC[split], self.INP_TOK)
-        outputs = self.preprocess(self.OUT_SRC[split], self.OUT_TOK)
+    def preprocess(self, filename, dict_txt):
+        ''' Modification:
+                Tokenization with Jieba + Customized Dictionary
+        '''
+        return dao.get_sen2tok(filename, dict_txt)
 
+    def generate_sequences(self, inp_sen_toks=None, out_sen_toks=None, verbose=True):
+        ''' Generate proper sequences with padding
+        '''
         word_to_idx = self.word_to_idx
-        idx_to_word = self.idx_to_word
-        word_to_idx_ctr = self.word_to_idx_ctr
 
         # generate sequences
         sequences_input = []
         sequences_output = []
 
-        texts = inputs
-        for text in texts:
-            tmp = [word_to_idx[self.sent_start]]
-            for token in text:
-                if token not in word_to_idx:
-                    tmp.append(word_to_idx[self.unknown_word])
-                else:
-                    tmp.append(word_to_idx[token])
-            tmp.append(word_to_idx[self.sent_end])
-            sequences_input.append(tmp)
+        if inp_sen_toks is not None:
+            texts = inp_sen_toks
+            for text in texts:
+                tmp = [word_to_idx[self.sent_start]]
+                for token in text:
+                    if token not in word_to_idx:
+                        tmp.append(word_to_idx[self.unknown_word])
+                    else:
+                        tmp.append(word_to_idx[token])
+                tmp.append(word_to_idx[self.sent_end])
+                sequences_input.append(tmp)
+            sequences_input = pad_sequences(
+                sequences_input, maxlen=config.max_input_seq_length, padding='pre', truncating='post')
+            if verbose:
+                print("Example input sentence:")
+                print(sequences_input[0], ":")
+                print(self.fromIdxSeqToVocabSeq(sequences_input[0]))
 
-        texts = outputs
-        for text in texts:
-            tmp = [word_to_idx[self.sent_start]]
-            for token in text:
-                if token not in word_to_idx:
-                    tmp.append(word_to_idx[self.unknown_word])
-                else:
-                    tmp.append(word_to_idx[token])
-            tmp.append(word_to_idx[self.sent_end])
-            sequences_output.append(tmp)
-
-        # pad sequences
-        # sequences_input, sequences_output = padAsPerBuckets(sequences_input, sequences_output)
-        sequences_input = pad_sequences(
-            sequences_input, maxlen=config.max_input_seq_length, padding='pre', truncating='post')
-        sequences_output = pad_sequences(
+        if out_sen_toks is not None:
+            texts = out_sen_toks
+            for text in texts:
+                tmp = [word_to_idx[self.sent_start]]
+                for token in text:
+                    if token not in word_to_idx:
+                        tmp.append(word_to_idx[self.unknown_word])
+                    else:
+                        tmp.append(word_to_idx[token])
+                tmp.append(word_to_idx[self.sent_end])
+                sequences_output.append(tmp)
+            sequences_output = pad_sequences(
             sequences_output, maxlen=config.max_output_seq_length, padding='post', truncating='post')
+            if verbose:
+                print("Example output sentence:")
+                print(sequences_output[0], ":")
+                print(self.fromIdxSeqToVocabSeq(sequences_output[0]))
+        # sequences_input, sequences_output = padAsPerBuckets(sequences_input, sequences_output)
 
-        print("Printing few sample sequences... ")
-        print(sequences_input[0],":", self.fromIdxSeqToVocabSeq(sequences_input[0]),
-              "---",
-              sequences_output[0], ":", self.fromIdxSeqToVocabSeq(sequences_output[0]))
-        print ("=" * 5)
+        if verbose:
+            print("=" * 5)
 
+        return sequences_input, sequences_output
+
+    def loadData(self, split):
+        print("="*5, " loadData: split = ", split)
+        inp_sen_toks = self.preprocess(self.INP_SRC[split], self.INP_TOK)
+        out_sen_toks = self.preprocess(self.OUT_SRC[split], self.OUT_TOK)
+        sequences_input, sequences_output = self.generate_sequences(
+            inp_sen_toks=inp_sen_toks, out_sen_toks=out_sen_toks)
         return sequences_input, sequences_output
 
     def fromIdxSeqToVocabSeq(self, seq):
@@ -239,3 +235,55 @@ class PreProcessing:
             np.random.shuffle(indices)
         print ("np.sum(np.sum(np.sum(matching_input_token))) = ", np.sum(np.sum(np.sum(matching_input_token))))
         return encoder_inputs, decoder_inputs, decoder_outputs, matching_input_token
+
+
+def modifyParamsWithPrepro(params, preprocessing):
+        ''' Add preprocessing details to params
+        '''
+        params['vocab_size'] = preprocessing.vocab_size
+        params['preprocessing'] = preprocessing
+
+        #Pretrained embeddibngs
+        if params['use_pretrained_embeddings']:
+            pretrained_embeddings = {
+                'canto': pickle.load(open(params['canto_embedding_path'], "rb")),
+                'stdch': pickle.load(open(params['stdch_embedding_path'], "rb")),
+            }
+            word_to_idx = preprocessing.word_to_idx
+            embedding_matrix = {
+                'canto': np.random.rand(params['vocab_size'], params['embeddings_dim']),
+                'stdch': np.random.rand(params['vocab_size'], params['embeddings_dim'])
+            }
+            not_found_count = {'stdch': 0, 'canto': 0}
+            for src, matrix_name in [('stdch', 'encoder_embeddings_matrix'),
+                                     ('canto', 'decoder_embeddings_matrix')]:
+                not_found_count = 0
+                for token, idx in word_to_idx.items():
+                    if token in pretrained_embeddings[src]:
+                        embedding_matrix[src][idx] = pretrained_embeddings[src][token]
+                    else:
+                        not_found_count += 1
+                        if not_found_count < 10:
+                            print ("No pretrained embedding for (only first 10 such cases will be printed. other prints are suppressed) ",token)
+                print ("(%s)not found count = " % src, not_found_count)
+                params[matrix_name] = embedding_matrix[src]
+
+        if params['use_additional_info_from_pretrained_embeddings']:
+            for src, matrix_name in [('stdch', 'encoder_embeddings_matrix'),
+                                     ('canto', 'decoder_embeddings_matrix')]:
+                additional_count = 0
+                tmp = []
+                for token in pretrained_embeddings[src]:
+                    if token not in preprocessing.word_to_idx:
+                        preprocessing.word_to_idx[token] = preprocessing.word_to_idx_ctr
+                        preprocessing.idx_to_word[preprocessing.word_to_idx_ctr] = token
+                        preprocessing.word_to_idx_ctr += 1
+                        tmp.append(pretrained_embeddings[src][token])
+                        additional_count += 1
+                print ("additional_count(%s) = %s " % (src, additional_count))
+                tmp = np.array(tmp)
+                params[matrix_name] = np.vstack([params[matrix_name], tmp])
+            #print "New vocab size = ",params['vocab_size']
+            params['vocab_size'] = preprocessing.word_to_idx_ctr
+
+        return params

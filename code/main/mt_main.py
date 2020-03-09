@@ -22,13 +22,13 @@ import utilities as datasets
 import utilities
 import dao
 import mt_solver as solver
-from prepro import PreProcessing
+from prepro import PreProcessing, modifyParamsWithPrepro
 
 ########################
 usage = '''
 python mt_main.py train <num_of_iters> <model_name>
 OR
-python mt_main.py inference <saved_model_name> <greedy/beam>
+python mt_main.py validation <saved_model_name> <greedy/beam>
 OR
 python mt_main.py test <saved_model_name> <greedy/beam>
 OR
@@ -50,26 +50,7 @@ transcript_files = config.transcript_files
 def main():
 
     # params
-    params = {}
-    params['embeddings_dim'] = config.embeddings_dim
-    params['lstm_cell_size'] = config.lstm_cell_size
-    params['max_input_seq_length'] = config.max_input_seq_length
-    params['max_output_seq_length'] = config.max_output_seq_length-1  # inputs are all but last element, outputs are al but first element
-    params['batch_size'] = config.batch_size
-    params['use_pretrained_embeddings'] = config.use_pretrained_embeddings
-    params['share_encoder_decoder_embeddings'] = config.share_encoder_decoder_embeddings
-    params['use_pointer'] = config.use_pointer
-    params['canto_embedding_path'] = config.canto_embedding_path
-    params['stdch_embedding_path'] = config.stdch_embedding_path
-    params['pretrained_embeddings_are_trainable'] = config.pretrained_embeddings_are_trainable
-    params['use_additional_info_from_pretrained_embeddings'] = config.use_additional_info_from_pretrained_embeddings
-    params['max_vocab_size'] = config.max_vocab_size
-    params['do_vocab_pruning'] = config.do_vocab_pruning
-    params['use_reverse_encoder'] = config.use_reverse_encoder
-    params['use_sentinel_loss'] =config.use_sentinel_loss
-    params['lambd'] = config.lambd
-    params['use_context_for_out'] = config.use_context_for_out
-
+    params = config.params
 
     mode = sys.argv[1]
     print ("mode = ", mode)
@@ -116,11 +97,10 @@ def main():
         return
 
     else:
-        data = pickle.load(open(data_dir + "data.obj", "rb"))
-        preprocessing = pickle.load(open(data_dir + "preprocessing.obj", "rb"))
+        data = pickle.load(open(data_dir + "/data.obj", "rb"))
+        preprocessing = pickle.load(open(data_dir + "/preprocessing.obj", "rb"))
 
-    params['vocab_size'] = preprocessing.vocab_size
-    params['preprocessing'] = preprocessing
+    params = modifyParamsWithPrepro(params, preprocessing)
     train = data['train']
     val = data['valid']
     test = data['test']
@@ -138,49 +118,6 @@ def main():
         train_decoder_outputs = train_decoder_outputs[:lim]
         train_decoder_outputs_matching_inputs = train_decoder_outputs_matching_inputs[:lim]
         train = train_encoder_inputs, train_decoder_inputs, train_decoder_outputs, train_decoder_outputs_matching_inputs
-
-    #Pretrained embeddibngs
-    if params['use_pretrained_embeddings']:
-        pretrained_embeddings = {
-            'canto': pickle.load(open(params['canto_embedding_path'], "rb")),
-            'stdch': pickle.load(open(params['stdch_embedding_path'], "rb")),
-        }
-        word_to_idx = preprocessing.word_to_idx
-        embedding_matrix = {
-            'canto': np.random.rand(params['vocab_size'], params['embeddings_dim']),
-            'stdch': np.random.rand(params['vocab_size'], params['embeddings_dim'])
-        }
-        not_found_count = {'stdch': 0, 'canto': 0}
-        for src, matrix_name in [('stdch', 'encoder_embeddings_matrix'),
-                                 ('canto', 'decoder_embeddings_matrix')]:
-            not_found_count = 0
-            for token, idx in word_to_idx.items():
-                if token in pretrained_embeddings[src]:
-                    embedding_matrix[src][idx] = pretrained_embeddings[src][token]
-                else:
-                    not_found_count += 1
-                    if not_found_count < 10:
-                        print ("No pretrained embedding for (only first 10 such cases will be printed. other prints are suppressed) ",token)
-            print ("(%s)not found count = " % src, not_found_count)
-            params[matrix_name] = embedding_matrix[src]
-
-    if params['use_additional_info_from_pretrained_embeddings']:
-        for src, matrix_name in [('stdch', 'encoder_embeddings_matrix'),
-                                 ('canto', 'decoder_embeddings_matrix')]:
-            additional_count = 0
-            tmp = []
-            for token in pretrained_embeddings[src]:
-                if token not in preprocessing.word_to_idx:
-                    preprocessing.word_to_idx[token] = preprocessing.word_to_idx_ctr
-                    preprocessing.idx_to_word[preprocessing.word_to_idx_ctr] = token
-                    preprocessing.word_to_idx_ctr += 1
-                    tmp.append(pretrained_embeddings[src][token])
-                    additional_count += 1
-            print ("additional_count(%s) = %s " % (src, additional_count))
-            tmp = np.array(tmp)
-            params[matrix_name] = np.vstack([params[matrix_name], tmp])
-        #print "New vocab size = ",params['vocab_size']
-        params['vocab_size'] = preprocessing.word_to_idx_ctr
 
     # TRAIN/DEBUG
     if mode == 'train' or mode == "debug":
@@ -224,7 +161,7 @@ def main():
 
         model_name = saved_model_path.rpartition('/')[2]
         validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".valid.output")
-        original_data_path = data_dir + preprocessing.OUT_SRC['valid'] + '.tok.char'
+        original_data_path = data_dir + "/" + preprocessing.OUT_SRC['valid'] + '.tok.char'
         BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".valid.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
@@ -240,7 +177,11 @@ def main():
 
         inference_type = sys.argv[3] # greedy / beam
         print ("inference_type = ",inference_type)
-        rint ("----Running on Test Set-----")
+
+        params['saved_model_path'] = saved_model_path
+        rnn_model = solver.Solver(params, buckets=None, mode='inference')
+        _ = rnn_model.getModel(params, mode='inference', reuse=False, buckets=None)
+        print ("----Running on Test Set-----")
 
         test_encoder_inputs, test_decoder_inputs, test_decoder_outputs, test_decoder_outputs_matching_inputs = test
         if len(test_decoder_outputs.shape)==3:
@@ -251,7 +192,7 @@ def main():
 
         model_name = saved_model_path.rpartition('/')[2]
         validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".test.output")
-        original_data_path = data_dir + preprocessing.OUT_SRC['test'] + '.tok.char'
+        original_data_path = data_dir + "/" + preprocessing.OUT_SRC['test'] + '.tok.char'
         BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".test.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,

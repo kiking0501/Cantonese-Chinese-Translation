@@ -54,7 +54,7 @@ to pre-process and save train/valid/test data.
 - First run pre-processing
 - Run
 `python mt_main.py train <iter_num> <output_model_name>` </br> or
-`python mt_main.py <valid/test> <saved_model_name> <inference_type>`
+`python mt_main.py <validation/test> <saved_model_name> <inference_type>`
 - Training settings can be modified at `configuration.py`
 - Trained models and results are saved in /data/tmp/
 - Link to the original paper: https://arxiv.org/abs/1707.01161
