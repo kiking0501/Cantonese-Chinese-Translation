@@ -54,10 +54,10 @@ class PreProcessing:
         "test": "test.canto.sent"
     }
 
-    OUT_TOK = "dict.txt.pycanto-stdch_wiki"
-    INP_TOK = "dict.txt.big_trad"
-    # OUT_TOK = "char"
-    # INP_TOK = "char"
+    # OUT_TOK = "dict.txt.pycanto-canto_wiki"
+    # INP_TOK = "dict.txt.big_trad"
+    OUT_TOK = "char"
+    INP_TOK = "char"
 
     def __init__(self):
         self.sent_start, self.sent_end, self.pad_word, self.unknown_word = self._initVocabItems()

@@ -46,9 +46,9 @@ use_context_for_out = True
 
 # general training params
 display_step = 1
-sample_step = 2
+sample_step = 1
 save_step = 1
-batch_size = 16
+batch_size = 32
 
 
 # params

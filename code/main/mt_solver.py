@@ -193,7 +193,8 @@ class Solver:
                     self.runInference(
                         config, encoder_inputs[:batch_size], decoder_outputs[:batch_size],
                         reverse_vocab, sess,
-                        show_num=show_num)
+                        show_num=show_num,
+                        print_gt=False)
                     print("End Training Samples.")
                 if step % save_step == 0:
                     save_path = saver.save(sess, os.path.join(data_dir, "tmp", model_name + str(step) + ".ckpt"))
@@ -236,8 +237,8 @@ class Solver:
                             print("INPUT: ", inpt)
                             print ("GT: ", gt)
                         print ("prediction: ", ret)
-                        print ("")
-                        if i > show_num:
+                        # print ("")
+                        if i >= show_num:
                             break
             return decoder_outputs_inference, alpha_inference
         elif typ == "beam":
@@ -247,7 +248,7 @@ class Solver:
     ###################################################################################
 
     def solveAll(self, config, encoder_inputs, decoder_ground_truth_outputs, reverse_vocab,
-                 sess=None, print_progress=True, inference_type="greedy", show_num=5):  # sampling
+                 sess=None, print_progress=True, inference_type="greedy", show_num=1):  # sampling
 
         if print_progress:
             print (" SolveAll ...... ", "="*5)
@@ -284,7 +285,7 @@ class Solver:
                 decoder_outputs_inference_cur, alpha_cur = self.runInference(
                     config,
                     encoder_inputs_cur, decoder_ground_truth_cur, reverse_vocab,
-                    sess=sess, print_all=print_progress, print_gt=print_progress,
+                    sess=sess, print_all=print_progress, print_gt=False,
                     show_num=show_num)
                 decoder_outputs_inference.extend(decoder_outputs_inference_cur[:lim])
                 alpha.extend(alpha_cur[:lim])
