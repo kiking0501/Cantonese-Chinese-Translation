@@ -10,7 +10,7 @@ def CACHE(name):
     return _CACHE(name, dir_path=PKL_PATH)
 
 
-data_dir = DATA_PATH
+data_dir = DATA_PATH + "/"
 
 # GPU
 use_gpu = True
@@ -49,6 +49,7 @@ display_step = 1
 sample_step = 1
 save_step = 1
 batch_size = 32
+learning_rate = 0.0005
 
 
 # params
@@ -71,3 +72,4 @@ params['use_reverse_encoder'] = use_reverse_encoder
 params['use_sentinel_loss'] = use_sentinel_loss
 params['lambd'] = lambd
 params['use_context_for_out'] = use_context_for_out
+params['learning_rate'] = learning_rate

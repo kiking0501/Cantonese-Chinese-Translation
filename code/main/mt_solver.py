@@ -35,7 +35,7 @@ class Solver:
         if "optimizer_typ" in config:
             optimizer_typ = config['optimizer_typ']
         self.optimizer_typ = optimizer_typ
-        learning_rate = 0.001  # 0.001
+        learning_rate = config['learning_rate']
         if mode == "train":
             print ("optimizer_typ, learning_rate= ", optimizer_typ, learning_rate)
 
@@ -351,7 +351,7 @@ class Solver:
             params, val_encoder_inputs, val_decoder_outputs, reverse_vocab,
             sess=sess, print_progress=True, show_num=5)
         validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".valid.output")
-        original_data_path = data_dir + "/" + params['preprocessing'].OUT_SRC['valid'] + '.tok.char'
+        original_data_path = data_dir + params['preprocessing'].OUT_SRC['valid'] + '.tok.char'
         BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".valid.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,

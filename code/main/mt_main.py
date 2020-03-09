@@ -97,8 +97,8 @@ def main():
         return
 
     else:
-        data = pickle.load(open(data_dir + "/data.obj", "rb"))
-        preprocessing = pickle.load(open(data_dir + "/preprocessing.obj", "rb"))
+        data = pickle.load(open(data_dir + "data.obj", "rb"))
+        preprocessing = pickle.load(open(data_dir + "preprocessing.obj", "rb"))
 
     params = modifyParamsWithPrepro(params, preprocessing)
     train = data['train']
@@ -161,7 +161,7 @@ def main():
 
         model_name = saved_model_path.rpartition('/')[2]
         validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".valid.output")
-        original_data_path = data_dir + "/" + preprocessing.OUT_SRC['valid'] + '.tok.char'
+        original_data_path = data_dir + preprocessing.OUT_SRC['valid'] + '.tok.char'
         BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".valid.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
@@ -192,7 +192,7 @@ def main():
 
         model_name = saved_model_path.rpartition('/')[2]
         validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".test.output")
-        original_data_path = data_dir + "/" + preprocessing.OUT_SRC['test'] + '.tok.char'
+        original_data_path = data_dir + preprocessing.OUT_SRC['test'] + '.tok.char'
         BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".test.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
