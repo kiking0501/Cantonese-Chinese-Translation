@@ -21,7 +21,7 @@ class PreProcessing:
         "test": "test.canto.sent"
     }
 
-    OUT_TOK = "dict.txt.pycanto-canto_wiki"
+    OUT_TOK = "dict.txt.pycanto-stdch_wiki"
     INP_TOK = "dict.txt.big_trad"
     # OUT_TOK = "char"
     # INP_TOK = "char"
@@ -210,7 +210,7 @@ class PreProcessing:
         return encoder_inputs, decoder_inputs, decoder_outputs, matching_input_token
 
 
-def modifyParamsWithPrepro(params, preprocessing):
+def modifyParamsWithPrepro(params, preprocessing, verbose=True):
         ''' Add preprocessing details to params
         '''
         params['vocab_size'] = preprocessing.vocab_size
@@ -236,9 +236,10 @@ def modifyParamsWithPrepro(params, preprocessing):
                         embedding_matrix[src][idx] = pretrained_embeddings[src][token]
                     else:
                         not_found_count += 1
-                        if not_found_count < 10:
+                        if not_found_count < 10 and verbose:
                             print ("No pretrained embedding for (only first 10 such cases will be printed. other prints are suppressed) ",token)
-                print ("(%s)not found count = " % src, not_found_count)
+                if verbose:
+                    print ("(%s)not found count = " % src, not_found_count)
                 params[matrix_name] = embedding_matrix[src]
 
         if params['use_additional_info_from_pretrained_embeddings']:
@@ -253,7 +254,8 @@ def modifyParamsWithPrepro(params, preprocessing):
                         preprocessing.word_to_idx_ctr += 1
                         tmp.append(pretrained_embeddings[src][token])
                         additional_count += 1
-                print ("additional_count(%s) = %s " % (src, additional_count))
+                if verbose:
+                    print ("additional_count(%s) = %s " % (src, additional_count))
                 tmp = np.array(tmp)
                 params[matrix_name] = np.vstack([params[matrix_name], tmp])
             #print "New vocab size = ",params['vocab_size']

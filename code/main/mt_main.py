@@ -23,6 +23,7 @@ import utilities
 import dao
 import mt_solver as solver
 from prepro import PreProcessing, modifyParamsWithPrepro
+import json
 
 ########################
 usage = '''
@@ -100,7 +101,6 @@ def main():
         data = pickle.load(open(data_dir + "data.obj", "rb"))
         preprocessing = pickle.load(open(data_dir + "preprocessing.obj", "rb"))
 
-    params = modifyParamsWithPrepro(params, preprocessing)
     train = data['train']
     val = data['valid']
     test = data['test']
@@ -133,6 +133,8 @@ def main():
         for bucket, _ in enumerate(buckets):
             train_buckets[bucket] = train
 
+        json.dump(params, open(os.path.join(data_dir, "tmp", "%s.params" % model_name), "w"))
+        params = modifyParamsWithPrepro(params, preprocessing)
         rnn_model = solver.Solver(params, buckets)
         _ = rnn_model.getModel(params, mode='train', reuse=False, buckets=buckets)
         rnn_model.trainModel(config=params, train_feed_dict=train_buckets, val_feed_dct=val, reverse_vocab=preprocessing.idx_to_word, do_init=True)
@@ -145,7 +147,13 @@ def main():
         inference_type = sys.argv[3] # greedy / beam
         print( "inference_type = ",inference_type)
 
+        params_path = os.path.join(data_dir, "%s.params" % saved_model_path.rpartition('/')[2].partition('.')[0])
+        if os.path.exists(params_path):
+            params = json.load(params)
+            print("successfully load params.")
+
         params['saved_model_path'] = saved_model_path
+        params = modifyParamsWithPrepro(params, preprocessing)
         rnn_model = solver.Solver(params, buckets=None, mode='inference')
         _ = rnn_model.getModel(params, mode='inference', reuse=False, buckets=None)
         print ("----Running on Validation Set-----")
@@ -178,7 +186,13 @@ def main():
         inference_type = sys.argv[3] # greedy / beam
         print ("inference_type = ",inference_type)
 
+        params_path = os.path.join(data_dir, "%s.params" % saved_model_path.rpartition('/')[2].partition('.')[0])
+        if os.path.exists(params_path):
+            params = json.load(params)
+            print("successfully load params.")
+
         params['saved_model_path'] = saved_model_path
+        params = modifyParamsWithPrepro(params, preprocessing)
         rnn_model = solver.Solver(params, buckets=None, mode='inference')
         _ = rnn_model.getModel(params, mode='inference', reuse=False, buckets=None)
         print ("----Running on Test Set-----")

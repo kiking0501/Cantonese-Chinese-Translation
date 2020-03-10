@@ -4,6 +4,11 @@ import utilities
 from utilities import *
 import configuration
 import math
+import json
+import pickle
+from prepro import modifyParamsWithPrepro
+from dao import sen2tok
+
 
 # pointer
 if configuration.use_pointer:
@@ -193,8 +198,7 @@ class Solver:
                     self.runInference(
                         config, encoder_inputs[:batch_size], decoder_outputs[:batch_size],
                         reverse_vocab, sess,
-                        show_num=show_num,
-                        print_gt=False)
+                        show_num=show_num)
                     print("End Training Samples.")
                 if step % save_step == 0:
                     save_path = saver.save(sess, os.path.join(data_dir, "tmp", model_name + str(step) + ".ckpt"))
@@ -237,7 +241,7 @@ class Solver:
                             print("INPUT: ", inpt)
                             print ("GT: ", gt)
                         print ("prediction: ", ret)
-                        # print ("")
+                        print ("")
                         if i >= show_num:
                             break
             return decoder_outputs_inference, alpha_inference
@@ -274,7 +278,10 @@ class Solver:
                 print ("Batch(i) = ", i)
             encoder_inputs_cur = encoder_inputs[i*batch_size:(i+1)*batch_size]
 
-            decoder_ground_truth_cur = decoder_ground_truth_outputs[i*batch_size:(i+1)*batch_size]
+            if decoder_ground_truth_outputs is not None:
+                decoder_ground_truth_cur = decoder_ground_truth_outputs[i*batch_size:(i+1)*batch_size]
+            else:
+                decoder_ground_truth_cur = None
 
             lim = len(encoder_inputs_cur)
             if len(encoder_inputs_cur) < batch_size:
@@ -285,7 +292,7 @@ class Solver:
                 decoder_outputs_inference_cur, alpha_cur = self.runInference(
                     config,
                     encoder_inputs_cur, decoder_ground_truth_cur, reverse_vocab,
-                    sess=sess, print_all=print_progress, print_gt=False,
+                    sess=sess, print_all=print_progress, print_gt=print_progress,
                     show_num=show_num)
                 decoder_outputs_inference.extend(decoder_outputs_inference_cur[:lim])
                 alpha.extend(alpha_cur[:lim])
@@ -293,9 +300,9 @@ class Solver:
                 pass
 
                 #Printing out attention matrix - Required for UNK replacement during post-processing
-            import pickle
-            pickle.dump(alpha, open("alpha.p", "wb"))
-            print ("Dumped alphas")
+            # import pickle
+            # pickle.dump(alpha, open("alpha.p", "wb"))
+            # print ("Dumped alphas")
 
         return decoder_outputs_inference, decoder_ground_truth_outputs
 
@@ -360,3 +367,42 @@ class Solver:
         return open(BLEUOutputFile_path, "r").read()
 
 ########################################################################################
+
+class SimpleSolver():
+    data_dir = config.data_dir
+
+    def __init__(self, saved_model, saved_param):
+        self.preprocessing = pickle.load(open(self.data_dir + "preprocessing.obj", "rb"))
+        self.params = json.load(open(self.data_dir + "tmp/" + saved_param))
+        self.params = modifyParamsWithPrepro(self.params, self.preprocessing, verbose=False)
+        self.params['saved_model_path'] = self.data_dir + "tmp/" + saved_model
+
+        self.rnn_model = Solver(self.params, buckets=None, mode='inference')
+        self.rnn_model.getModel(self.params, mode='inference', reuse=False, buckets=None)
+
+    def translate(self, sentence_list):
+        sen_toks = sen2tok(sentence_list, self.preprocessing.INP_TOK)
+        inp_sequences = self.preprocessing.generate_inp_sequences(sen_toks)
+        encoder_inputs = np.array(inp_sequences)
+        decoder_inference, _ = self.rnn_model.solveAll(
+            self.params, encoder_inputs, None, self.preprocessing.idx_to_word, print_progress=False)
+        return ["".join([self.preprocessing.idx_to_word[val]
+                 for val in row
+                 if val > 3])
+                 for row in decoder_inference
+               ]
+
+
+if __name__ == '__main__':
+    input_list = [
+        "你是誰",
+        "成熟點好嗎",
+        "今天是好日子"
+    ]
+
+    ss = SimpleSolver("test5.ckpt", "test.params")
+    output_list = ss.translate(input_list)
+    for inp, out in zip(input_list, output_list):
+        print("Source: ", inp)
+        print("Predict: ", out)
+        print("")
