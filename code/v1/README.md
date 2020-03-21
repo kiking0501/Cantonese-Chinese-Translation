@@ -109,7 +109,7 @@ to pre-process and save train/valid/test data.
 
 
 # Reference
-``` python
+``` latex
 - Keith Carlson, Allen Riddell, and Daniel Rockmore.  "Evaluating prose style transfer with the Bible". 2018. R. Soc. open sci. 5: 171829. http://dx.doi.org/10.1098/rsos.171920
 
 - Francisco Guzman, Peng-Jen Chen, Myle OttF, Juan Pino, Guillaume Lample, Philipp Koehn, Vishrav Chaudhary,  Marc’Aurelio Ranzato. 2019. "The FLORES Evaluation Datasets for Low-Resource Machine Translation: Nepali–English and Sinhala–English", arXiv:1902.01382v3, EMNLP 2019.
