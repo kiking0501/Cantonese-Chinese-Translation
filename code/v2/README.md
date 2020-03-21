@@ -117,7 +117,7 @@
       def __iter__(self):
       	for file_name in FILES:
           	for sentence in read_wiki_sentences(file_name):
-                  yield sen
+                  yield sentence
   
   if __name__ == '__main__':
       st = time.time()

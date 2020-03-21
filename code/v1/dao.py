@@ -72,7 +72,7 @@ def read_bilingual_transcript(file_name, data_num=None):
     if data_num is None:
         raise ValueError("%s unknown; Please specify the number of lines by data_num!" % file_name)
 
-    with open(os.path.join(data_dir, "transcript", file_name), 'r') as f:
+    with open(os.path.join(data_dir, "MOVIE-transcript", file_name), 'r') as f:
         data = f.read()
 
     li = [s.content.partition('\n')[0:3:2]
@@ -83,9 +83,9 @@ def read_bilingual_transcript(file_name, data_num=None):
 
 # for original .srt file
 def save_clean_transcript(file_name, encoding="utf8", ensure_trad=True):
-    with open(os.path.join(data_dir, "transcript", file_name), 'r', encoding=encoding) as f:
+    with open(os.path.join(data_dir, "MOVIE-transcript", file_name), 'r', encoding=encoding) as f:
         data = f.read()
-    with open(os.path.join(data_dir, "transcript", "clean", file_name.partition('.')[0]+'.original'), "w") as f:
+    with open(os.path.join(data_dir, "MOVIE-transcript", "clean", file_name.partition('.')[0]+'.original'), "w") as f:
         for ind, s in enumerate(srt.parse(data)):
             if ensure_trad:
                 f.write("%s %s\n" % (ind, s2t.convert(s.content.replace('\n', ' '))))
@@ -96,8 +96,8 @@ def save_clean_transcript(file_name, encoding="utf8", ensure_trad=True):
 
 def read_clean_transcript_pairs(name):
     data = []
-    with open(os.path.join(data_dir, "transcript", "clean", "%s.original" % name)) as f1:
-        with open(os.path.join(data_dir, "transcript", "clean", "%s.translate" % name)) as f2:
+    with open(os.path.join(data_dir, "MOVIE-transcript", "clean", "%s.original" % name)) as f1:
+        with open(os.path.join(data_dir, "MOVIE-transcript", "clean", "%s.translate" % name)) as f2:
             for l1, l2 in zip(f1.readlines(), f2.readlines()):
                 l1p, l2p = l1.partition(' '), l2.partition(' ')
                 if l1p[0] != l2p[0]:

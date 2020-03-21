@@ -1,3 +1,14 @@
+## 2020 Mar
+torch==1.4.0
+torchvision==0.5.0
+pytorch-pretrained-bert==0.6.2
+pytorch-nlp==0.5.0
+transformers==2.5.1
+ipywidgets==7.5.1
+jupyter-client==6.0.0
+jupyter-core==4.6.3
+sentencepiece==0.1.85
+## 2019 Oct
 srt==3.0.0
 pysubs==2-0.2.4
 opencc-python-reimplemented==0.1.5 #opencc==0.2

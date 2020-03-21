@@ -21,7 +21,7 @@ class PreProcessing:
         "test": "test.canto.sent"
     }
 
-    OUT_TOK = "dict.txt.pycanto-stdch_wiki"
+    OUT_TOK = "dict.txt.pycanto-custom_canto_wiki"
     INP_TOK = "dict.txt.big_trad"
     # OUT_TOK = "char"
     # INP_TOK = "char"

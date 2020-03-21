@@ -34,7 +34,7 @@ use_reverse_encoder = True
 share_encoder_decoder_embeddings = True
 use_pretrained_embeddings = True
 pretrained_embeddings_are_trainable = False
-canto_embedding_path = data_dir + "/embedding/canto_wiki.pkl"
+canto_embedding_path = data_dir + "/embedding/custom_canto_wiki.pkl"
 stdch_embedding_path = data_dir + "/embedding/stdch_wiki.pkl"
 use_additional_info_from_pretrained_embeddings = True  # if some word is not in training data set but is there in pretrained embeddings: mark True to add such words also. Otherwise mark False
 use_additional_info_from_pretrained_embeddings = False
@@ -49,7 +49,7 @@ display_step = 1
 sample_step = 1
 save_step = 1
 batch_size = 32
-learning_rate = 0.0005
+learning_rate = 0.0001
 
 
 # params
