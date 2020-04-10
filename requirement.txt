@@ -16,3 +16,4 @@ jieba==0.39
 pycantonese==2.2.0
 Scrapy==1.5.0
 gensim==3.5.0
+pyconll

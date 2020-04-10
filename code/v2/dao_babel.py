@@ -4,6 +4,12 @@ from configuration import BABEL_PATH, BABEL_ORI_PATH
 from collections import defaultdict
 
 
+if not os.path.exists(os.path.join(BABEL_ORI_PATH, "conversational")):
+    raise IOError("You need to download IARPA_BABEL_BP_101_LDC2016S02.zip from\n"
+                  " https://catalog.ldc.upenn.edu/LDC2016S02\n"
+                  " extract and place the complete IARPA_BABEL_BP_101 folder\n"
+                  " under %s!" % BABEL_PATH)
+
 s2t = OpenCC('s2t')
 
 

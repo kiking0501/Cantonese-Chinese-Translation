@@ -6,17 +6,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from gensim.models.wrappers import FastText
-
+from gensim.test.utils import datapath
+from gensim.models import KeyedVectors
 
 tf.set_random_seed(1)
 np.random.seed(1)
 #os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 data_dir = config.data_dir
-output_dir = os.path.join(data_dir, "translation_matrix_model")
+output_dir = os.path.join(data_dir, "translation_matrix_model", "custom_canto_wiki")
 
 trained_W_path = os.path.join(output_dir, "W.pkl")
-canto_lm = FastText.load_fasttext_format(os.path.join(data_dir, "embedding", "cantonese", "wiki.zh_yue.bin"))
+# canto_lm = FastText.load_fasttext_format(os.path.join(data_dir, "embedding", "cantonese", "wiki.zh_yue.bin"))
+canto_lm = KeyedVectors.load_word2vec_format(datapath(os.path.join(data_dir, "embedding", "cantonese", "custom_wiki.bin")), binary=True)
 
 
 ###### BLEU Testing #####
@@ -26,12 +28,12 @@ TRANS_MATRIX_OUTPUT_FILE = "translatoin_matrix.output"
 BLEU_OUTPUT_FILE = "translation_matrix.BLEU"
 
 ### Validation Settings
-# TEST_INPUT_TOKENIZED = "valid.stdch.sent.tok.dict.txt.big_trad"
-# TEST_GT_CHAR = "valid.canto.sent.tok.char"
+TEST_INPUT_TOKENIZED = "valid.stdch.sent.tok.dict.txt.big_trad"
+TEST_GT_CHAR = "valid.canto.sent.tok.char"
 
 ## Test Settings
-TEST_INPUT_TOKENIZED = "test.stdch.sent.tok.dict.txt.big_trad"
-TEST_GT_CHAR = "test.canto.sent.tok.char"
+# TEST_INPUT_TOKENIZED = "test.stdch.sent.tok.dict.txt.big_trad"
+# TEST_GT_CHAR = "test.canto.sent.tok.char"
 
 
 def generate_output(stdch_emb, srcFile, trgFile, W=None, **kwargs):
@@ -206,35 +208,38 @@ def SGDtrain(trainX, trainZ, validX, validZ,
     train_step = train_opt.minimize(loss)
 
     train_loss_list, valid_loss_list = [], []
-    for t in range(max_iter):
+    try:
+        for t in range(max_iter):
 
-        rand_ind = np.random.choice(n)
+            rand_ind = np.random.choice(n)
 
-        sess.run(
-            train_step,
-            feed_dict={
-                x_vec: np.transpose(tX[rand_ind].reshape(1, d)),
-                z_vec: np.transpose(tZ[rand_ind].reshape(1, d))
-            }
-        )
+            sess.run(
+                train_step,
+                feed_dict={
+                    x_vec: np.transpose(tX[rand_ind].reshape(1, d)),
+                    z_vec: np.transpose(tZ[rand_ind].reshape(1, d))
+                }
+            )
 
-        curr_W = sess.run(W)
-        train_loss = np.square(
-            np.linalg.norm(np.matmul(curr_W, np.transpose(tX)) - np.transpose(tZ))
-        )
-        valid_loss = np.square(
-            np.linalg.norm(np.matmul(curr_W, np.transpose(vX)) - np.transpose(vZ))
-        )
-        if (t + 1) % print_every == 0:
-            print("Step %5d/%5d: train-loss: %5.4f, valid-loss: %5.4f" %
-                  (t + 1, max_iter, train_loss, valid_loss))
-            check_accuracy(validX, validZ, W=curr_W, verbose=False)
+            curr_W = sess.run(W)
+            train_loss = np.square(
+                np.linalg.norm(np.matmul(curr_W, np.transpose(tX)) - np.transpose(tZ))
+            )
+            valid_loss = np.square(
+                np.linalg.norm(np.matmul(curr_W, np.transpose(vX)) - np.transpose(vZ))
+            )
+            if (t + 1) % print_every == 0:
+                print("Step %5d/%5d: train-loss: %5.4f, valid-loss: %5.4f" %
+                      (t + 1, max_iter, train_loss, valid_loss))
+                check_accuracy(validX, validZ, W=curr_W, verbose=True)
 
-        if (t > 0) and (abs(train_loss_list[-1] - train_loss) < tol):
-            break
+            if (t > 0) and (abs(train_loss_list[-1] - train_loss) < tol):
+                break
 
-        train_loss_list.append(train_loss)
-        valid_loss_list.append(valid_loss)
+            train_loss_list.append(train_loss)
+            valid_loss_list.append(valid_loss)
+    except KeyboardInterrupt:
+        pass
 
     final_w = sess.run(W)
     print("Final W Performance:")
@@ -243,7 +248,7 @@ def SGDtrain(trainX, trainZ, validX, validZ,
 
 
 def check_accuracy(validX, validZ, W=None,
-                   topN=5, threshold=0.6, verbose=True):
+                   topN=5, threshold=0.2, verbose=True):
     vX, vX_words = validX
     vZ, vZ_words = validZ
     n, d = vX.shape
@@ -281,13 +286,19 @@ def inference(stdch_w_vec, W=None,
 if __name__ == '__main__':
 
     ### Check Internal Accuracy ###
-    THRESHOLD = 0.7
+    THRESHOLD = 0.2
 
 
+    # if not all([os.path.exists(os.path.join(output_dir, SETTINGS[src][split]))
+    #            for split in ["train", "valid"] for src in ["canto", "stdch"]]):
+    #     save_embeddings_with_frequencies(
+    #         "canto_wiki.pkl", "stdch_wiki.pkl", "dict.txt.pycanto", "dict.txt.big_trad",
+    #         "canto2stdch_full.dict"
+    #     )
     if not all([os.path.exists(os.path.join(output_dir, SETTINGS[src][split]))
                for split in ["train", "valid"] for src in ["canto", "stdch"]]):
         save_embeddings_with_frequencies(
-            "canto_wiki.pkl", "stdch_wiki.pkl", "dict.txt.pycanto", "dict.txt.big_trad",
+            "custom_canto_wiki.pkl", "stdch_wiki.pkl", "dict.txt.pycanto", "dict.txt.big_trad",
             "canto2stdch_full.dict"
         )
 
@@ -295,7 +306,7 @@ if __name__ == '__main__':
     validX, validZ = load_data("valid")
 
     if not os.path.exists(trained_W_path):
-        W = SGDtrain(trainX, trainZ, validX, validZ)
+        W = SGDtrain(trainX, trainZ, validX, validZ, lr=1e-3, max_iter=5000)  #1e-2 for original
         pickle.dump({"W": W}, open(trained_W_path, "wb"))
         print("%s saved." % trained_W_path)
 

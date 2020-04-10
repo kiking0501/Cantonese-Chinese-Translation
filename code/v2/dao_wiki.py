@@ -1,13 +1,21 @@
 import os
 from collections import defaultdict
-from configuration import DATA_PATH
+from configuration import WIKI_PATH, WIKI_ORI_PATH
 from determine_lang import DetermineLanguage
 import json
 import re
 import jieba
 
-WIKI_PATH = os.path.join(DATA_PATH, "Wikipedia-YUE")
-WIKI_ORI_PATH = os.path.join(WIKI_PATH, "json")
+if not os.path.exists(WIKI_ORI_PATH):
+    raise IOError("The 'json' folder is missing!"
+                  " You should"
+                  " (1) first download a .xml.bz2 dump-file\n"
+                  "     from https://dumps.wikimedia.org/zh_yuewiki/\n"
+                  " (2) and then use the WikiExtractor\n"
+                  "     https://github.com/attardi/wikiextractor\n"
+                  "      to extract the wiki articles as json files\n"
+                  " (3) and finally place the json files inside a 'json' folder\n"
+                  "     under %s!" % WIKI_PATH)
 
 DL = DetermineLanguage()
 

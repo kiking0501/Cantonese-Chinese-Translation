@@ -4,6 +4,13 @@ from collections import defaultdict
 from configuration import HKCANCOR_PATH, HKCANCOR_ORI_PATH
 
 
+if not os.path.exists(HKCANCOR_ORI_PATH):
+    raise IOError("You need to download hkcancor-utf8.zip from\n"
+                  " https://github.com/fcbond/hkcancor/tree/master/data\n"
+                  " extract and place the complete hkcancor-utf8 folder\n"
+                  " under %s!" % HKCANCOR_PATH)
+
+
 def read_conversation(file_code):
     with open(os.path.join(HKCANCOR_ORI_PATH, "FC-001_v2")) as f:
         soup = BeautifulSoup(f.read())
