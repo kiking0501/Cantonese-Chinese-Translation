@@ -108,6 +108,8 @@ def sampleFromDistribution(vals):
 
 
 def getBlue(validOutFile_name, original_data_path, BLEUOutputFile_path, decoder_outputs_inference, decoder_ground_truth_outputs, preprocessing_obj, verbose=False):
+    BLEU_script = os.path.join(config.EVAL_PATH, "multi-bleu.perl")
+
     validOutFile = open(validOutFile_name, "w")
     for outputLine, groundLine in zip(decoder_outputs_inference, decoder_ground_truth_outputs):
         if verbose:
@@ -123,8 +125,8 @@ def getBlue(validOutFile_name, original_data_path, BLEUOutputFile_path, decoder_
         validOutFile.write(outputLine)
     validOutFile.close()
 
-    print("perl multi-bleu.perl -lc " + original_data_path + " < " + validOutFile_name)
-    BLEUOutput = os.popen("perl multi-bleu.perl -lc " + original_data_path + " < " + validOutFile_name).read()
+    print("perl " + BLEU_script + " -lc " + original_data_path + " < " + validOutFile_name)
+    BLEUOutput = os.popen("perl " + BLEU_script + " -lc " + original_data_path + " < " + validOutFile_name).read()
     BLEUOutputFile = open(BLEUOutputFile_path, "w")
     BLEUOutputFile.write(BLEUOutput)
     BLEUOutputFile.close()

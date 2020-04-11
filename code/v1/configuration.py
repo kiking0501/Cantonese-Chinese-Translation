@@ -3,13 +3,15 @@ from cache import CACHE as _CACHE
 
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_PATH = os.path.join(BASE_PATH, "data")
+PKL_PATH = os.path.join(DATA_PATH, "pkl")
 JIEBA_DICT_PATH = os.path.join(DATA_PATH, "jieba_dict")
 EMB_PATH = os.path.join(DATA_PATH, "embedding")
-MOVIE_PATH = os.path.join(DATA_PATH, "MOVIE-transcript")
 
-PKL_PATH = os.path.join(DATA_PATH, "pkl")
+MOVIE_PATH = os.path.join(DATA_PATH, "MOVIE-transcript")
 EXPERIMENT_PATH = os.path.join(DATA_PATH, "mt_model")
 SAVE_PATH = os.path.join(EXPERIMENT_PATH, "save")
+
+EVAL_PATH = os.path.join(BASE_PATH, "code", "eval")
 
 if not os.path.exists(PKL_PATH):
     os.mkdir(PKL_PATH)

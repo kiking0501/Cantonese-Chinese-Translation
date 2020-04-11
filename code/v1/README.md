@@ -36,48 +36,65 @@ This version of code is initiated from the work by <a href="https://github.com/h
   
 
 # Instructions to run:
-Change working directory to **/code/v1/**
-
 #### Initialization : 
+- Change working directory to **/code/v1/**
+
 - Run: </br>
 `python mt_main.py init` </br>
 to download the pre-trained Cantonese and Chinese embeddings from [fastText](https://fasttext.cc/docs/en/pretrained-vectors.html); and also to build token-dictionaries for the Chinese tokenizer
 
 #### Preprocessing: 
 - First run initialization
+- Change working directory to **/code/v1/**
+
 - Run: </br>
 `python mt_main.py preprocessing` </br>
-to pre-process and save train/valid/test data.
+to pre-process and save train/valid/test data for the two models.
 - The used dictionaries for tokenization can be changed at `prepro.py`
 
 #### Copy-Enriched Seq-to-Seq Model: 
 - First run pre-processing
+- Change working directory to **/code/v1/**
+
 - Run
 `python mt_main.py train <iter_num> <output_model_name>` </br> or
-`python mt_main.py <validation/test> <saved_model_name> <inference_type>`
+`python mt_main.py validation <saved_model_name>`
 - Training settings can be modified at `configuration.py`
-- Trained models and results are saved in /data/tmp/
+- Trained models and temporary results are saved in **/data/mt_model/**
 - Link to the original paper: https://arxiv.org/abs/1707.01161
 
 #### Translation-Matrix Model: 
 - First run pre-processing
+- Change working directory to **/code/v1/**
+
 - [Download](https://dl.fbaipublicfiles.com/fasttext/vectors-wiki/wiki.zh_yue.zip) and get the Cantonese language model (wiki.zh_yue.bin), put under data/embedding/
 - Run
 `python mt_translation_matrix.py` </br>
   and a linear projection matrix between the embedding spaces would be learnt using Stochastic Gradient Descent
-- Trained matrix, internal validation accuracy and final results are saved in /data/translation_matrix /
+- Trained matrix and temporary results are saved in **/data/mt_translation_matrix/**
 - Link to the original paper: https://arxiv.org/pdf/1309.4168.pdf
 
-### Evaluation:
-- First run pre-processing
+### Evaluation on Test-data:
+- (Assume trained models are ready)
+
+- Change working directory to **/code/v1/**
 
 - Run
-  `python baseline_as_it_is.py` or
-  `python baseline_dictionary.py` 
-  to check performance of the two baseline methods
+  `python baseline_as_it_is.py` or </br>
+  `python baseline_dictionary.py`  </br>
+  to check performance of the two baseline methods (saved in **/code/eval/baselines/**)
 
-- Results are saved in /data/baselines
+- Run
+  
+  `python mt_main.py test <saved_model_name>` </br>
+  to check performance of the Copy-Enriched Seq2Seq Model (saved in **/code/eval/mt_model/MOVIE-transcript/**)
 
+- Run
+
+  `python mt_translation_matrix.py` </br>
+  
+  to check performance of the Translation-Matrix Model (saved in **/code/eval/mt_translation_matrix/MOVIE-transcript/**)
+  
   
 
 # Details of Implementation

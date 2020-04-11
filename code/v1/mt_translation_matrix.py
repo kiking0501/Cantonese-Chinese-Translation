@@ -13,11 +13,15 @@ tf.set_random_seed(1)
 np.random.seed(1)
 #os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-output_dir = os.path.join(config.DATA_PATH, "mt_translation_matrix", "custom_canto_wiki")
+save_dir = os.path.join(config.DATA_PATH, "mt_translation_matrix", "custom_canto_wiki")
+output_dir = os.path.join(config.EVAL_PATH, "mt_translation_matrix", "MOVIE-transcript", "custom_canto_wiki")
+
+if not os.path.exists(save_dir):
+    os.mkdir(save_dir)
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
 
-trained_W_path = os.path.join(output_dir, "W.pkl")
+trained_W_path = os.path.join(save_dir, "W.pkl")
 # canto_lm = FastText.load_fasttext_format(os.path.join(config.EMB_PATH, "cantonese", "wiki.zh_yue.bin"))
 canto_lm = KeyedVectors.load_word2vec_format(datapath(os.path.join(config.EMB_PATH, "cantonese", "custom_wiki.bin")), binary=True)
 
@@ -28,13 +32,13 @@ canto_lm = KeyedVectors.load_word2vec_format(datapath(os.path.join(config.EMB_PA
 TRANS_MATRIX_OUTPUT_FILE = "translatoin_matrix.output"
 BLEU_OUTPUT_FILE = "translation_matrix.BLEU"
 
-### Validation Settings
-TEST_INPUT_TOKENIZED = "valid.stdch.sent.tok.dict.txt.big_trad"
-TEST_GT_CHAR = "valid.canto.sent.tok.char"
+# ### Validation Settings
+# TEST_INPUT_TOKENIZED = "valid.stdch.sent.tok.dict.txt.big_trad"
+# TEST_GT_CHAR = "valid.canto.sent.tok.char"
 
-## Test Settings
-# TEST_INPUT_TOKENIZED = "test.stdch.sent.tok.dict.txt.big_trad"
-# TEST_GT_CHAR = "test.canto.sent.tok.char"
+# Test Settings
+TEST_INPUT_TOKENIZED = "test.stdch.sent.tok.dict.txt.big_trad"
+TEST_GT_CHAR = "test.canto.sent.tok.char"
 
 
 def generate_output(stdch_emb, srcFile, trgFile, W=None, **kwargs):
@@ -141,7 +145,7 @@ def save_embeddings_with_frequencies(canto_emb, stdch_emb, canto_freq, stdch_fre
         all_freq_dict[(canto_w, stdch_w)] = v
 
     sorted_freq_list = sorted(all_freq_dict.items(), key=lambda x: (-x[1], len(x[0][0]), len(x[0][1])))
-    with open(os.path.join(output_dir, "dict.txt.bilingual_map"), "w") as f:
+    with open(os.path.join(save_dir, "dict.txt.bilingual_map"), "w") as f:
         for (canto_w, stdch_w), v in sorted_freq_list:
             f.write("%s %s %s\n" % (canto_w, stdch_w, v))
         print("Total: %s." % len(sorted_freq_list))
@@ -154,8 +158,8 @@ def save_embeddings_with_frequencies(canto_emb, stdch_emb, canto_freq, stdch_fre
     for split, data in [
             ("train", train_data), ("valid", valid_data)]:
 
-        stdch_f = open(os.path.join(output_dir, "%s.stdch.emb" % split), "wb")
-        canto_f = open(os.path.join(output_dir, "%s.canto.emb" % split), "wb")
+        stdch_f = open(os.path.join(save_dir, "%s.stdch.emb" % split), "wb")
+        canto_f = open(os.path.join(save_dir, "%s.canto.emb" % split), "wb")
         pickle.dump({'data': [(stdch_w, stdch_embedding[stdch_w]) for (canto_w, stdch_w), c in data]}, stdch_f)  # a list of tuple (word, emb)
         pickle.dump({'data': [(canto_w, canto_embedding[canto_w]) for (canto_w, stdch_w), c in data]}, canto_f)  # a list of tuple (word, emb)
         stdch_f.close()
@@ -167,12 +171,12 @@ def save_embeddings_with_frequencies(canto_emb, stdch_emb, canto_freq, stdch_fre
 
 def load_data(split, source='stdch', target='canto'):
     source_saved_pkl = pickle.load(
-        open(os.path.join(output_dir, SETTINGS[source][split]), "rb"))
+        open(os.path.join(save_dir, SETTINGS[source][split]), "rb"))
     X = np.array([t[1] for t in source_saved_pkl['data']])
     X_words = [t[0] for t in source_saved_pkl['data']]
 
     target_saved_pkl = pickle.load(
-        open(os.path.join(output_dir, SETTINGS[target][split]), "rb"))
+        open(os.path.join(save_dir, SETTINGS[target][split]), "rb"))
     Z = np.array([t[1] for t in target_saved_pkl['data']])
     Z_words = [t[0] for t in target_saved_pkl['data']]
     print("X.shape: %s, Z.shape: %s." % (X.shape, Z.shape))
@@ -285,23 +289,27 @@ def inference(stdch_w_vec, W=None,
 
 
 if __name__ == '__main__':
+    ''' TO-DO: improve with parser options '''
 
     ### Check Internal Accuracy ###
     THRESHOLD = 0.2
 
 
-    # if not all([os.path.exists(os.path.join(output_dir, SETTINGS[src][split]))
+    # if not all([os.path.exists(os.path.join(save_dir, SETTINGS[src][split]))
     #            for split in ["train", "valid"] for src in ["canto", "stdch"]]):
     #     save_embeddings_with_frequencies(
     #         "canto_wiki.pkl", "stdch_wiki.pkl", "dict.txt.pycanto", "dict.txt.big_trad",
     #         "canto2stdch_full.dict"
     #     )
-    if not all([os.path.exists(os.path.join(output_dir, SETTINGS[src][split]))
+    if not all([os.path.exists(os.path.join(save_dir, SETTINGS[src][split]))
                for split in ["train", "valid"] for src in ["canto", "stdch"]]):
         save_embeddings_with_frequencies(
             "custom_canto_wiki.pkl", "stdch_wiki.pkl", "dict.txt.pycanto", "dict.txt.big_trad",
             "canto2stdch_full.dict"
         )
+
+    BLEU_script = os.path.join(config.EVAL_PATH, "multi-bleu.perl")
+
 
     trainX, trainZ = load_data("train")
     validX, validZ = load_data("valid")
@@ -322,8 +330,8 @@ if __name__ == '__main__':
         "stdch_wiki.pkl", testInput, TransMatrixOutputFile, threshold=THRESHOLD, verbose=True
     )
 
-    print("perl multi-bleu.perl -lc " + testGT + " < " + TransMatrixOutputFile)
-    BLEUOutput = os.popen("perl multi-bleu.perl -lc " + testGT + " < " + TransMatrixOutputFile).read()
+    print("perl " + BLEU_script + " -lc " + testGT + " < " + TransMatrixOutputFile)
+    BLEUOutput = os.popen("perl " + BLEU_script + " -lc " + testGT + " < " + TransMatrixOutputFile).read()
     with open(os.path.join(output_dir, BLEU_OUTPUT_FILE), "w") as f:
         print(BLEUOutput)
         f.write(BLEUOutput)

@@ -29,9 +29,9 @@ import json
 usage = '''
 python mt_main.py train <num_of_iters> <model_name>
 OR
-python mt_main.py validation <saved_model_name> <greedy/beam>
+python mt_main.py validation <saved_model_name>
 OR
-python mt_main.py test <saved_model_name> <greedy/beam>
+python mt_main.py test <saved_model_name>
 OR
 python mt_main.py debug
 OR
@@ -46,6 +46,7 @@ print ("")
 
 data_dir = config.data_dir
 save_dir = config.SAVE_PATH
+eval_dir = os.path.join(config.EVAL_PATH, "mt_model", "MOVIE-transcript")
 transcript_files = config.transcript_files
 
 
@@ -145,8 +146,9 @@ def main():
         saved_model_path = os.path.join(save_dir, sys.argv[2])
         print ("saved_model_path = ",saved_model_path)
 
-        inference_type = sys.argv[3] # greedy / beam
-        print( "inference_type = ",inference_type)
+        # inference_type = sys.argv[3] # greedy / beam
+        # print( "inference_type = ",inference_type)
+        ### only greedy is implemented, pass
 
         params_path = os.path.join(data_dir, "%s.params" % saved_model_path.rpartition('/')[2].partition('.')[0])
         if os.path.exists(params_path):
@@ -166,7 +168,7 @@ def main():
             val_decoder_outputs=np.reshape(val_decoder_outputs, (val_decoder_outputs.shape[0], val_decoder_outputs.shape[1]))
         decoder_outputs_inference, decoder_ground_truth_outputs = rnn_model.solveAll(
             params, val_encoder_inputs, val_decoder_outputs, preprocessing.idx_to_word,
-            inference_type=inference_type, print_progress=False)
+            print_progress=False)
 
         model_name = saved_model_path.rpartition('/')[2]
         validOutFile_name = os.path.join(save_dir, model_name + ".valid.output")
@@ -184,8 +186,9 @@ def main():
         saved_model_path = os.path.join(save_dir, sys.argv[2])
         print ("saved_model_path = ",saved_model_path)
 
-        inference_type = sys.argv[3] # greedy / beam
-        print ("inference_type = ",inference_type)
+        # inference_type = sys.argv[3] # greedy / beam
+        # print ("inference_type = ",inference_type)
+        ### only greedy is implemented, pass
 
         params_path = os.path.join(data_dir, "%s.params" % saved_model_path.rpartition('/')[2].partition('.')[0])
         if os.path.exists(params_path):
@@ -203,12 +206,12 @@ def main():
             test_decoder_outputs=np.reshape(test_decoder_outputs, (test_decoder_outputs.shape[0], test_decoder_outputs.shape[1]))
         decoder_outputs_inference, decoder_ground_truth_outputs = rnn_model.solveAll(
             params, test_encoder_inputs, test_decoder_outputs, preprocessing.idx_to_word,
-            inference_type=inference_type, print_progress=False)
+            print_progress=False)
 
         model_name = saved_model_path.rpartition('/')[2]
-        validOutFile_name = os.path.join(save_dir, model_name + ".test.output")
-        original_data_path = data_dir + preprocessing.OUT_SRC['test'] + '.tok.char'
-        BLEUOutputFile_path = os.path.join(save_dir, model_name + ".test.BLEU")
+        validOutFile_name = os.path.join(eval_dir, model_name + ".test.output")
+        original_data_path = os.path.join(data_dir, preprocessing.OUT_SRC['test'] + '.tok.char')
+        BLEUOutputFile_path = os.path.join(eval_dir, model_name + ".test.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
             decoder_outputs_inference, decoder_ground_truth_outputs,

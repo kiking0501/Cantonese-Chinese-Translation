@@ -88,19 +88,21 @@ def generate_output(dictFile, srcFile, trgFile, map_type="replace"):
         print("%s saved." % trg_f.name)
 
 if __name__ == '__main__':
-    baseline_dir = os.path.join(config.DATA_PATH, "baselines")
+    baseline_dir = os.path.join(config.EVAL_PATH, "baselines", "MOVIE-transcript")
+    BLEU_script = os.path.join(config.EVAL_PATH, "multi-bleu.perl")
+
     if not os.path.exists(baseline_dir):
         os.mkdir(baseline_dir)
 
-    dictFile = os.path.join(config.data_dir, DICT_FILE)
+    dictFile = os.path.join(config.DATA_PATH, DICT_FILE)
     testInput = os.path.join(config.data_dir, TEST_INPUT_TOKENIZED)
     testGT = os.path.join(config.data_dir, TEST_GT_CHAR)
     dictOutputFile = os.path.join(baseline_dir, DICT_OUTPUT_FILE)
 
     generate_output(dictFile, testInput, dictOutputFile)
 
-    print("perl multi-bleu.perl -lc " + testGT + " < " + dictOutputFile)
-    BLEUOutput = os.popen("perl multi-bleu.perl -lc " + testGT + " < " + dictOutputFile).read()
+    print("perl " + BLEU_script + " -lc " + testGT + " < " + dictOutputFile)
+    BLEUOutput = os.popen("perl " + BLEU_script + " -lc " + testGT + " < " + dictOutputFile).read()
     with open(os.path.join(baseline_dir, BLEU_OUTPUT_FILE), "w") as f:
         print(BLEUOutput)
         f.write(BLEUOutput)
