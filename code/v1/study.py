@@ -4,6 +4,7 @@ from collections import defaultdict
 import os
 from dao import save_sen2tok
 
+
 class EmbeddingsCoverage(object):
 
     DATASETS = {
@@ -94,12 +95,12 @@ class EmbeddingsCoverage(object):
 
         if len(embedding_list) == 1:
             emb_counter = pickle.load(
-                open(os.path.join(config.data_dir, 'embedding', embedding_list[0]), "rb"))
+                open(os.path.join(config.EMB_PATH, embedding_list[0]), "rb"))
         else:
             emb_counter = defaultdict(int)
             for emb_file in embedding_list:
                 for k in pickle.load(
-                        open(os.path.join(config.data_dir, 'embedding', emb_file), "rb")).keys():
+                        open(os.path.join(config.EMB_PATH, emb_file), "rb")).keys():
                     emb_counter[k] += 1
 
         inter_tokens = set(emb_counter.keys()).intersection(token_counter.keys())

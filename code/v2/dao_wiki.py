@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from configuration import WIKI_PATH, WIKI_ORI_PATH
+from configuration import WIKI_PATH, WIKI_ORI_PATH, DATA_PATH, JIEBA_DICT_PATH
 from determine_lang import DetermineLanguage
 import json
 import re
@@ -24,7 +24,7 @@ def load_jieba(dict_txt="dict.txt.pycanto-stdch_wiki", verbose=False):
     ''' load jieba with the stated dictionary txt (valid after ver 0.28 '''
     if dict_txt is None:
         dict_txt = "dict.txt.big"
-    jieba.set_dictionary(os.path.join(DATA_PATH, "jieba_dict", dict_txt))
+    jieba.set_dictionary(os.path.join(JIEBA_DICT_PATH, dict_txt))
     if verbose:
         print("Successfully set Jieba-dict to '%s'. " % dict_txt)
 

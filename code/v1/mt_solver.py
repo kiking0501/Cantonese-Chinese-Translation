@@ -17,6 +17,7 @@ else:
     import mt_model as model
 
 data_dir = configuration.data_dir
+save_dir = configuration.SAVE_PATH
 
 
 class Solver:
@@ -201,7 +202,7 @@ class Solver:
                         show_num=show_num)
                     print("End Training Samples.")
                 if step % save_step == 0:
-                    save_path = saver.save(sess, os.path.join(data_dir, "tmp", model_name + str(step) + ".ckpt"))
+                    save_path = saver.save(sess, os.path.join(save_dir, model_name + str(step) + ".ckpt"))
                     # save_path = saver.save(sess, "./tmp/" + model_name + ".ckpt") # SAVE LATEST
                     print ("Model saved in file: ", save_path)
                 step += 1
@@ -357,9 +358,9 @@ class Solver:
         decoder_outputs_inference, decoder_ground_truth_outputs = self.solveAll(
             params, val_encoder_inputs, val_decoder_outputs, reverse_vocab,
             sess=sess, print_progress=True, show_num=5)
-        validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".valid.output")
+        validOutFile_name = os.path.join(save_dir, model_name + ".valid.output")
         original_data_path = data_dir + params['preprocessing'].OUT_SRC['valid'] + '.tok.char'
-        BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".valid.BLEU")
+        BLEUOutputFile_path = os.path.join(save_dir, model_name + ".valid.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
             decoder_outputs_inference, decoder_ground_truth_outputs,
@@ -370,12 +371,13 @@ class Solver:
 
 class SimpleSolver():
     data_dir = config.data_dir
+    save_dir = config.SAVE_PATH
 
     def __init__(self, saved_model, saved_param):
         self.preprocessing = pickle.load(open(self.data_dir + "preprocessing.obj", "rb"))
-        self.params = json.load(open(self.data_dir + "tmp/" + saved_param))
+        self.params = json.load(open(self.save_dir + "/" + saved_param))
         self.params = modifyParamsWithPrepro(self.params, self.preprocessing, verbose=False)
-        self.params['saved_model_path'] = self.data_dir + "tmp/" + saved_model
+        self.params['saved_model_path'] = self.save_dir + saved_model
 
         self.rnn_model = Solver(self.params, buckets=None, mode='inference')
         self.rnn_model.getModel(self.params, mode='inference', reuse=False, buckets=None)

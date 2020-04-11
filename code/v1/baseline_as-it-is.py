@@ -9,7 +9,7 @@ TEST_INPUT_CHAR = "test.stdch.sent.tok.char"
 TEST_GT_CHAR = "test.canto.sent.tok.char"
 
 if __name__ == '__main__':
-    baseline_dir = os.path.join(config.data_dir, "baselines")
+    baseline_dir = os.path.join(config.DATA_PATH, "baselines")
     if not os.path.exists(baseline_dir):
         os.mkdir(baseline_dir)
 

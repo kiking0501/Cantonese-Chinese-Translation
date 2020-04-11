@@ -45,6 +45,7 @@ print ("")
 ########################
 
 data_dir = config.data_dir
+save_dir = config.SAVE_PATH
 transcript_files = config.transcript_files
 
 
@@ -133,7 +134,7 @@ def main():
         for bucket, _ in enumerate(buckets):
             train_buckets[bucket] = train
 
-        json.dump(params, open(os.path.join(data_dir, "tmp", "%s.params" % model_name), "w"))
+        json.dump(params, open(os.path.join(save_dir, "%s.params" % model_name), "w"))
         params = modifyParamsWithPrepro(params, preprocessing)
         rnn_model = solver.Solver(params, buckets)
         _ = rnn_model.getModel(params, mode='train', reuse=False, buckets=buckets)
@@ -141,7 +142,7 @@ def main():
 
     # Validation
     elif mode == "validation":
-        saved_model_path = os.path.join(config.data_dir, 'tmp', sys.argv[2])
+        saved_model_path = os.path.join(save_dir, sys.argv[2])
         print ("saved_model_path = ",saved_model_path)
 
         inference_type = sys.argv[3] # greedy / beam
@@ -168,9 +169,9 @@ def main():
             inference_type=inference_type, print_progress=False)
 
         model_name = saved_model_path.rpartition('/')[2]
-        validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".valid.output")
+        validOutFile_name = os.path.join(save_dir, model_name + ".valid.output")
         original_data_path = data_dir + preprocessing.OUT_SRC['valid'] + '.tok.char'
-        BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".valid.BLEU")
+        BLEUOutputFile_path = os.path.join(save_dir, model_name + ".valid.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
             decoder_outputs_inference, decoder_ground_truth_outputs,
@@ -180,7 +181,7 @@ def main():
 
     # TEST
     elif mode == "test":
-        saved_model_path = os.path.join(config.data_dir, 'tmp', sys.argv[2])
+        saved_model_path = os.path.join(save_dir, sys.argv[2])
         print ("saved_model_path = ",saved_model_path)
 
         inference_type = sys.argv[3] # greedy / beam
@@ -205,9 +206,9 @@ def main():
             inference_type=inference_type, print_progress=False)
 
         model_name = saved_model_path.rpartition('/')[2]
-        validOutFile_name = os.path.join(data_dir, "tmp", model_name + ".test.output")
+        validOutFile_name = os.path.join(save_dir, model_name + ".test.output")
         original_data_path = data_dir + preprocessing.OUT_SRC['test'] + '.tok.char'
-        BLEUOutputFile_path = os.path.join(data_dir, "tmp", model_name + ".test.BLEU")
+        BLEUOutputFile_path = os.path.join(save_dir, model_name + ".test.BLEU")
         utilities.getBlue(
             validOutFile_name, original_data_path, BLEUOutputFile_path,
             decoder_outputs_inference, decoder_ground_truth_outputs,

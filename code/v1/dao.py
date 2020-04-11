@@ -7,7 +7,7 @@ from collections import defaultdict
 import jieba
 import pickle
 from determine_lang import DetermineLanguage
-from configuration import data_dir
+from configuration import data_dir, MOVIE_PATH, JIEBA_DICT_PATH, EMB_PATH
 import requests
 import shutil
 
@@ -20,9 +20,9 @@ DL = DetermineLanguage()
 
 def translate_jieba_dict():
     print("Translating Jieba Dict to Traditional Chinese...")
-    with open(os.path.join(data_dir, "jieba_dict", "dict.txt.big")) as f:
+    with open(os.path.join(JIEBA_DICT_PATH, "dict.txt.big")) as f:
         cnt = 0
-        trad_f = open(os.path.join(data_dir, "jieba_dict", "dict.txt.big_trad"), "w")
+        trad_f = open(os.path.join(JIEBA_DICT_PATH, "dict.txt.big_trad"), "w")
         line = f.readline()
         repeat_set = set()
         while line:
@@ -50,7 +50,7 @@ def create_jieba_dict_pycanto():
         pycanto_dict[l] += 1
 
     # print("Tagged Words / Freq / Repeated")
-    with open(os.path.join(data_dir, "jieba_dict", "dict.txt.pycanto"), "w") as f:
+    with open(os.path.join(JIEBA_DICT_PATH, "dict.txt.pycanto"), "w") as f:
         for (ww, c) in sorted(pycanto_dict.items(), key=lambda x: (-x[1], x[0][0], len(x[0][0]))):
             # print(ww, ':', freq[ww[0]], '/', c)
             f.write("%s %s %s\n" %(ww[0], freq[ww[0]],  ww[1].lower()))
@@ -72,7 +72,7 @@ def read_bilingual_transcript(file_name, data_num=None):
     if data_num is None:
         raise ValueError("%s unknown; Please specify the number of lines by data_num!" % file_name)
 
-    with open(os.path.join(data_dir, "MOVIE-transcript", file_name), 'r') as f:
+    with open(os.path.join(MOVIE_PATH, file_name), 'r') as f:
         data = f.read()
 
     li = [s.content.partition('\n')[0:3:2]
@@ -83,9 +83,9 @@ def read_bilingual_transcript(file_name, data_num=None):
 
 # for original .srt file
 def save_clean_transcript(file_name, encoding="utf8", ensure_trad=True):
-    with open(os.path.join(data_dir, "MOVIE-transcript", file_name), 'r', encoding=encoding) as f:
+    with open(os.path.join(MOVIE_PATH, file_name), 'r', encoding=encoding) as f:
         data = f.read()
-    with open(os.path.join(data_dir, "MOVIE-transcript", "clean", file_name.partition('.')[0]+'.original'), "w") as f:
+    with open(os.path.join(MOVIE_PATH, "clean", file_name.partition('.')[0]+'.original'), "w") as f:
         for ind, s in enumerate(srt.parse(data)):
             if ensure_trad:
                 f.write("%s %s\n" % (ind, s2t.convert(s.content.replace('\n', ' '))))
@@ -96,8 +96,8 @@ def save_clean_transcript(file_name, encoding="utf8", ensure_trad=True):
 
 def read_clean_transcript_pairs(name):
     data = []
-    with open(os.path.join(data_dir, "MOVIE-transcript", "clean", "%s.original" % name)) as f1:
-        with open(os.path.join(data_dir, "MOVIE-transcript", "clean", "%s.translate" % name)) as f2:
+    with open(os.path.join(MOVIE_PATH, "clean", "%s.original" % name)) as f1:
+        with open(os.path.join(MOVIE_PATH, "clean", "%s.translate" % name)) as f2:
             for l1, l2 in zip(f1.readlines(), f2.readlines()):
                 l1p, l2p = l1.partition(' '), l2.partition(' ')
                 if l1p[0] != l2p[0]:
@@ -155,7 +155,7 @@ def load_jieba(dict_txt=None, verbose=False):
     ''' load jieba with the stated dictionary txt (valid after ver 0.28 '''
     if dict_txt is None:
         dict_txt = "dict.txt.big"
-    jieba.set_dictionary(os.path.join(data_dir, "jieba_dict", dict_txt))
+    jieba.set_dictionary(os.path.join(JIEBA_DICT_PATH, dict_txt))
     if verbose: print("Successfully set Jieba-dict to '%s'. " % dict_txt)
 
 
@@ -241,7 +241,7 @@ def download_embedding():
         'standard_chinese': 'https://dl.fbaipublicfiles.com/fasttext/vectors-wiki/wiki.zh.vec',
     }
     for k, url in urls.items():
-        path = os.path.join(data_dir, "embedding", k, url.rpartition('/')[2])
+        path = os.path.join(EMB_PATH, k, url.rpartition('/')[2])
         if not os.path.exists(path):
             print("Downloading %s embedding from %s..." % (k, url))
         with requests.get(url, stream=True) as r:
@@ -254,7 +254,7 @@ def read_embedding(file_name, verbose=False):
     if verbose: print("Reading %s..." % file_name)
     vec_dict = {}
     cnt = 0
-    with open(os.path.join(data_dir, "embedding", file_name)) as f:
+    with open(os.path.join(EMB_PATH, file_name)) as f:
         line = f.readline()
         total, dim = [int(seg) for seg in line.split(" ")]
 
@@ -272,20 +272,20 @@ def read_embedding(file_name, verbose=False):
 def save_embedding(file_name, output_name, ensure_trad=True):
     vec_dict = read_embedding(file_name, verbose=True)
     if ensure_trad: vec_dict = {s2t.convert(k): v for k, v in vec_dict.items()}
-    output_path = os.path.join(data_dir, "embedding", output_name)
+    output_path = os.path.join(EMB_PATH, output_name)
     pickle.dump(vec_dict, open(output_path, "wb"))
     print("%s saved." % output_path)
 
 
 def merge_dict_txt_with_embedding_tokens(dict_txt, emb_file):
     print("Merging %s with %s..." % (dict_txt, emb_file))
-    with open(os.path.join(data_dir, "jieba_dict", dict_txt)) as f:
+    with open(os.path.join(JIEBA_DICT_PATH, dict_txt)) as f:
         dt_toks = [l[:-1] for l in f.readlines()]
         tok_set = set([dt.split(' ')[0] for dt in dt_toks])
     emb_toks = pickle.load(
-        open(os.path.join(data_dir, 'embedding', emb_file), "rb")).keys()
+        open(os.path.join(EMB_PATH, emb_file), "rb")).keys()
     dt_toks += [et for et in emb_toks if et not in tok_set and DL.lang(et) == 'CHINESE']
-    with open(os.path.join(data_dir, "jieba_dict", dict_txt + '-' + emb_file.partition('.')[0]), "w") as f:
+    with open(os.path.join(JIEBA_DICT_PATH, dict_txt + '-' + emb_file.partition('.')[0]), "w") as f:
         for dt in dt_toks:
             f.write("%s 1\n" % dt)
         print("%s saved." % f.name)
@@ -296,7 +296,7 @@ def merge_dict_txt_list(dict_txt_list):
     total_dt_toks = []
     total_tok_set = set()
     for dict_txt in dict_txt_list:
-        with open(os.path.join(data_dir, "jieba_dict", dict_txt)) as f:
+        with open(os.path.join(JIEBA_DICT_PATH, dict_txt)) as f:
             dt_toks = [l[:-1] for l in f.readlines()]
             for dt in dt_toks:
                 tok = dt.split(' ')[0]
@@ -304,7 +304,7 @@ def merge_dict_txt_list(dict_txt_list):
                     total_tok_set.add(tok)
                     total_dt_toks.append(dt)
     f_name = '-'.join([dict_txt.rpartition('.')[2] for dict_txt in dict_txt_list])
-    with open(os.path.join(data_dir, "jieba_dict", "dict.txt.%s" % f_name), "w") as f:
+    with open(os.path.join(JIEBA_DICT_PATH, "dict.txt.%s" % f_name), "w") as f:
         for dt in total_dt_toks:
             f.write("%s\n" % dt)
         print("%s saved." % f.name)

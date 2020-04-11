@@ -2,6 +2,8 @@ import os
 
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_PATH = os.path.join(BASE_PATH, "data")
+JIEBA_DICT_PATH = os.path.join(DATA_PATH, "jieba_dict")
+TMP_PATH = os.path.join(DATA_PATH, "tmp_v2")
 
 BABEL_PATH = os.path.join(DATA_PATH, "dl-BABEL-Cantonese", "data")
 BABEL_ORI_PATH = os.path.join(BABEL_PATH, "IARPA_BABEL_BP_101")

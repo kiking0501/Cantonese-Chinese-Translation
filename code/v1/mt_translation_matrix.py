@@ -13,12 +13,13 @@ tf.set_random_seed(1)
 np.random.seed(1)
 #os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-data_dir = config.data_dir
-output_dir = os.path.join(data_dir, "translation_matrix_model", "custom_canto_wiki")
+output_dir = os.path.join(config.DATA_PATH, "mt_translation_matrix", "custom_canto_wiki")
+if not os.path.exists(output_dir):
+    os.mkdir(output_dir)
 
 trained_W_path = os.path.join(output_dir, "W.pkl")
-# canto_lm = FastText.load_fasttext_format(os.path.join(data_dir, "embedding", "cantonese", "wiki.zh_yue.bin"))
-canto_lm = KeyedVectors.load_word2vec_format(datapath(os.path.join(data_dir, "embedding", "cantonese", "custom_wiki.bin")), binary=True)
+# canto_lm = FastText.load_fasttext_format(os.path.join(config.EMB_PATH, "cantonese", "wiki.zh_yue.bin"))
+canto_lm = KeyedVectors.load_word2vec_format(datapath(os.path.join(config.EMB_PATH, "cantonese", "custom_wiki.bin")), binary=True)
 
 
 ###### BLEU Testing #####
@@ -41,7 +42,7 @@ def generate_output(stdch_emb, srcFile, trgFile, W=None, **kwargs):
             "replace": tokenize before mapping
             "regex" : direct mapping
     '''
-    stdch_embedding = pickle.load(open(os.path.join(data_dir, "embedding", stdch_emb), "rb"))
+    stdch_embedding = pickle.load(open(os.path.join(config.EMB_PATH, stdch_emb), "rb"))
     stdch_keys = stdch_embedding.keys()
 
     if W is None:
@@ -87,7 +88,7 @@ SETTINGS = {
 def save_embeddings_with_frequencies(canto_emb, stdch_emb, canto_freq, stdch_freq, addl_dict):
 
     def read_freq_dict(dict_txt):
-        with open(os.path.join(data_dir, "jieba_dict", dict_txt)) as f:
+        with open(os.path.join(JIEBA_DICT_PATH, dict_txt)) as f:
             freq_dict = {}
             for line in f.readlines():
                 s = line.split(' ')
@@ -95,8 +96,8 @@ def save_embeddings_with_frequencies(canto_emb, stdch_emb, canto_freq, stdch_fre
         return freq_dict
 
     canto_freq_dict, stdch_freq_dict = read_freq_dict(canto_freq), read_freq_dict(stdch_freq)
-    canto_embedding = pickle.load(open(os.path.join(data_dir, "embedding", canto_emb), "rb"))
-    stdch_embedding = pickle.load(open(os.path.join(data_dir, "embedding", stdch_emb), "rb"))
+    canto_embedding = pickle.load(open(os.path.join(config.EMB_PATH, canto_emb), "rb"))
+    stdch_embedding = pickle.load(open(os.path.join(config.EMB_PATH, stdch_emb), "rb"))
 
     # normalize different frequencies to 1000000-base
     normalize_base = 1e6
@@ -121,7 +122,7 @@ def save_embeddings_with_frequencies(canto_emb, stdch_emb, canto_freq, stdch_fre
     print("Overlap Words: %d" % len(inter_freq_dict))
     # get words that appear in the bilingual dictionary in both embeddings
     bilingual_freq_dict = {}
-    with open(os.path.join(data_dir, "static", addl_dict)) as f:
+    with open(os.path.join(config.DATA_PATH, "static", addl_dict)) as f:
         lines = f.readlines()
         for l in lines:
             canto_w, stdch_list = l.split(' ')

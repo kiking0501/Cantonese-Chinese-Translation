@@ -16,7 +16,7 @@ from collections import defaultdict
 
 
 MAJOR_URL = "https://apps.itsc.cuhk.edu.hk/hanyu/Page/"
-HTML_DIR = os.path.join(config.data_dir, "static", "chi_cuhk_database_2001")
+HTML_DIR = os.path.join(config.DATA_PATH, "static", "chi_cuhk_database_2001")
 
 if not os.path.exists(HTML_DIR):
     os.mkdir(HTML_DIR)
@@ -144,7 +144,7 @@ def save_canto_dict_map(canto_emb_file="canto_wiki.pkl",
 
     if canto_emb_file is not None:
         canto_embedding = pickle.load(
-            open(os.path.join(config.data_dir, "embedding", canto_emb_file), "rb"))
+            open(os.path.join(config.EMB_PATH, canto_emb_file), "rb"))
         inter_dict = get_interwords_dict(term_dict, list(canto_embedding.keys()))
     else:
         inter_dict = term_dict  # use all terms
@@ -198,7 +198,7 @@ def filter_canto_dict_map(stdch_emb_file="stdch_wiki.pkl",
 
     if not simple:
         stdch_embedding = pickle.load(
-            open(os.path.join(config.data_dir, "embedding", stdch_emb_file), "rb"))
+            open(os.path.join(config.EMB_PATH, stdch_emb_file), "rb"))
         stdch_set = set(stdch_embedding.keys())
 
     with open(os.path.join(HTML_DIR, input_file)) as input_f:
@@ -256,8 +256,9 @@ if __name__ == '__main__':
     #
     print("\n\n\n === Crawl pages (Intersection Terms Only)... ")
 
+    canto_emb_file = "canto_wiki.pkl"
     canto_embedding = pickle.load(
-        open(os.path.join(config.data_dir, "embedding", canto_emb_file), "rb"))
+        open(os.path.join(config.EMB_PATH, canto_emb_file), "rb"))
 
     term_dict = get_term_dict()
     # inter_dict = get_interwords_dict(term_dict, list(canto_embedding.keys()))

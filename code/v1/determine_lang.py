@@ -3,11 +3,10 @@
 import re
 import os
 from collections import defaultdict
+from configuration import DATA_PATH
 
-data_dir = "../../data/"
 
-
-UNICODE_BLOCK_PATH = os.path.join(data_dir, 'static', 'UnicodeBlocks.txt')
+UNICODE_BLOCK_PATH = os.path.join(DATA_PATH, 'static', 'UnicodeBlocks.txt')
 LANGUAGE_BLOCKS = {
     'CHINESE': [
         'CJK Radicals Supplement',
