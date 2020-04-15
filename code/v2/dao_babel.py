@@ -115,9 +115,9 @@ def save_clean_transcription_combine(output_file="transcription_combine.txt", ov
     return transcription
 
 
-def read_clean_transcription_combine(combine_txt="transcription_combine.txt"):
+def read_clean_transcription_combine(combine_txt="transcription_combine.txt", tokenize=True):
     with open(os.path.join(BABEL_PATH, combine_txt)) as f:
-        corpus = [l.strip().split(' ') for l in f.readlines()]
+        corpus = [l.strip().split(' ') if tokenize else l.strip().replace(" ", "") for l in f.readlines()]
     return corpus
 
 

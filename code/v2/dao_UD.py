@@ -20,9 +20,9 @@ def read_UD(file_path):
     return pyconll.load_from_file(file_path)
 
 
-def read_UD_sentences(file_path):
+def read_UD_sentences(file_path, tokenize=True):
     UD_file = read_UD(file_path)
-    sentences = [[token.form for token in sentence]
+    sentences = [[token.form for token in sentence] if tokenize else ''.join([token.form for token in sentence])
                  for sentence in UD_file]
     return sentences
 
@@ -40,6 +40,13 @@ def save_UD_sentences_for_TER(tokenize=False, stdch_file="UD_stdch.txt", canto_f
                     stdch_f.write(''.join(stdch) + ' ' + '(%s)' % ''.join(stdch) + '\n')
                     canto_f.write(''.join(canto) + ' ' + '(%s)' % ''.join(stdch) + '\n')
         print("%s | %s saved. " % (stdch_file, canto_file))
+
+
+def read_data(tokenize=False):
+    stdch_sen = read_UD_sentences(UD_STDCH_CONLLU, tokenize=tokenize)
+    canto_sen = read_UD_sentences(UD_CANTO_CONLLU, tokenize=tokenize)
+    data = [(stdch, canto) for stdch, canto in zip(stdch_sen, canto_sen)]
+    return data
 
 
 if __name__ == '__main__':

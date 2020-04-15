@@ -17,3 +17,5 @@ pycantonese==2.2.0
 Scrapy==1.5.0
 gensim==3.5.0
 pyconll
+chart-studio==1.1.0
+plotly==4.6.0
