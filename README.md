@@ -2,11 +2,21 @@
 
 An experimental study on *Standard-Chinese* to *Cantonese* translator models. <br>
 
-
+<p float="center">
+    <img src="img/translation_example.jpg" />
+</p>
 
 ### <a href="/code/v2" target="_blank">V2 (2020-Mar)</a>
 
-To be updated.
+#### Abstract: *Learning Cantonese from Standard-Chinese with Neural Machine Translation*
+
+> (As a continuation of the previous project) this project focuses on Neural Machine Translation (NMT) between Standard Chinese and Cantonese, with the former as the source language and the latter as the target language.
+
+Preliminary translation result of two sequence-to-sequence models: a vanilla RNN model with Gated Recurrent Units and attention, and the Transformer model:
+
+<p float="center">
+    <img src="img/v2_preliminary_result.png" width="500"/>
+</p>
 
 
 
