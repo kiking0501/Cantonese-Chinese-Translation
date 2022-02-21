@@ -15,7 +15,7 @@ An experimental study on *Standard-Chinese* to *Cantonese* translator models. <b
 Preliminary translation result of two sequence-to-sequence models: a vanilla RNN model with Gated Recurrent Units and attention, and the Transformer model:
 
 <p float="center">
-    <img src="img/v2_preliminary_result.png" width="500"/>
+    <img src="img/v2_preliminary_result.png"/>
 </p>
 
 
