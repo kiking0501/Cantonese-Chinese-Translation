@@ -12,7 +12,15 @@ An experimental study on *Standard-Chinese* to *Cantonese* translator models. <b
 
 > (As a continuation of the previous project) this project focuses on Neural Machine Translation (NMT) between Standard Chinese and Cantonese, with the former as the source language and the latter as the target language.
 
-Preliminary translation result of two sequence-to-sequence models: a vanilla RNN model with Gated Recurrent Units and attention, and the Transformer model:
+Two sequence-to-sequence models were studied:
+
+- **A Transformer model**. which follows the Encoder-Decoder architecture and uses stacked
+  self-attention and point-wise, fully connected layers for both the encoder and the decoder (Vaswani et al., 2017).
+- **A vanilla RNN model**, with the encoder and decoder layer being a recurrent neural network
+  composed of Gated Recurrent Units (Chung et al., 2014), and Bahdanau attention (Bahdanau
+  et al., 2015) in the encoder layer.
+
+Preliminary result:
 
 <p float="center">
     <img src="img/v2_preliminary_result.png"/>
